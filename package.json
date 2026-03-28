@@ -1,0 +1,11 @@
+{
+  "name": "adversaries-and-environments-for-daggerheart",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Repository for custom Daggerheart adversaries written in Markdown with frontmatter.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "clean": "node scripts/build.mjs --clean"
+  }
+}
