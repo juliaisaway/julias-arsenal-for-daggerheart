@@ -19,6 +19,7 @@ const allowedRoles = new Set([
 ]);
 const allowedTiers = new Set([1, 2, 3, 4]);
 const allowedDamageTypes = new Set(["physical", "magic"]);
+const allowedRanges = new Set(["Melee", "Very Close", "Close", "Far", "Very Far"]);
 const requiredFields = [
   "tier",
   "role",
@@ -131,7 +132,7 @@ function parseFrontmatter(frontmatterSource, filePath) {
   for (const rawLine of frontmatterSource.split("\n")) {
     const line = rawLine.trim();
 
-    if (!line) {
+    if (!line || line.startsWith("#")) {
       continue;
     }
 
@@ -182,6 +183,30 @@ function validateFrontmatter(frontmatter, filePath) {
     );
   }
 
+  if (typeof frontmatter.difficulty !== "number" || frontmatter.difficulty < 0) {
+    throw new Error(
+      `Invalid difficulty in ${filePath}. Expected a number greater than or equal to 0, received: ${frontmatter.difficulty}`,
+    );
+  }
+
+  if (typeof frontmatter.healthPoints !== "number" || frontmatter.healthPoints < 0) {
+    throw new Error(
+      `Invalid healthPoints in ${filePath}. Expected a number greater than or equal to 0, received: ${frontmatter.healthPoints}`,
+    );
+  }
+
+  if (typeof frontmatter.stress !== "number" || frontmatter.stress < 0) {
+    throw new Error(
+      `Invalid stress in ${filePath}. Expected a number greater than or equal to 0, received: ${frontmatter.stress}`,
+    );
+  }
+
+  if (typeof frontmatter.attack !== "string" || !/^[+-]\d+$/.test(frontmatter.attack)) {
+    throw new Error(
+      `Invalid attack in ${filePath}. Expected a signed integer like +1 or -2, received: ${frontmatter.attack}`,
+    );
+  }
+
   if (
     !Array.isArray(frontmatter.thresholds) ||
     frontmatter.thresholds.length !== 2 ||
@@ -196,6 +221,12 @@ function validateFrontmatter(frontmatter, filePath) {
   if (!allowedDamageTypes.has(frontmatter.damageType)) {
     throw new Error(
       `Invalid damageType in ${filePath}. Expected "physical" or "magic", received: ${frontmatter.damageType}`,
+    );
+  }
+
+  if (!allowedRanges.has(frontmatter.range)) {
+    throw new Error(
+      `Invalid range in ${filePath}. Expected one of ${Array.from(allowedRanges).join(", ")}, received: ${frontmatter.range}`,
     );
   }
 }
@@ -450,3 +481,4 @@ function formatExperience(value) {
 
   return String(value);
 }
+
