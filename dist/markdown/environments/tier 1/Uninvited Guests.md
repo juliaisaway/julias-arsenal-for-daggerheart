@@ -1,6 +1,6 @@
 # Uninvited Guests
 
-## Exploration — Tier 2
+## Exploration — Tier 1
 
 *A passenger train cuts through the landscape at steady speed, until something begins to rot from within. A strange sickness spreads among the passengers, and deep in the final carriage, something stirs.*
 
