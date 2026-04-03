@@ -354,10 +354,9 @@ function renderEnvironmentCard(md) {
   const impulses = extractSection(body, /## Impulses/i);
   const features = extractSection(body, /## Features/i);
   const designNotes = extractSection(body, /## Design notes/i);
-  const featuresWithoutFlavor = features ? features.split(/## Flavor/i)[0].trim() : "";
-  let processedFeatures = featuresWithoutFlavor ? featuresWithoutFlavor.replace(/### (.+?)\r?\n\r?\n/g, "### $1: ") : "";
+  let processedFeatures = features ? features.replace(/### (.+?)\r?\n\r?\n/g, "### $1: ") : "";
   processedFeatures = processedFeatures.replace(/### (.+?):\s*(.+)/g, "**_$1:_** $2");
-  const flavor = extractSection(body, /## Flavor/i);
+  processedFeatures = applyFlavorParagraphs(withExternalTargets(marked.parse(processedFeatures || "")));
 
   const blockTable = `
     <div class="block-table">
@@ -379,8 +378,7 @@ function renderEnvironmentCard(md) {
         </div>
         ${blockTable}
         <h2>Features</h2>
-        <div>${withExternalTargets(marked.parse(processedFeatures || ""))}</div>
-        ${flavor ? `<div class="flavor">${parseInlineWithExternalTargets(flavor)}</div>` : ""}
+        <div class="environment-features">${processedFeatures}</div>
       </div>
       ${renderDesignNotes(designNotes)}
     </div>
@@ -604,6 +602,10 @@ function renderDesignNotes(designNotes) {
   return `<div class="design-notes"><strong>Design notes:</strong> ${parseInlineWithExternalTargets(designNotes)}</div>`;
 }
 
+function applyFlavorParagraphs(html) {
+  return html.replace(/<p><em>([\s\S]*?)<\/em><\/p>/g, '<p class="flavor"><em>$1</em></p>');
+}
+
 function formatCategoryLabel(category) {
   return capitalizeWords(category);
 }
@@ -695,6 +697,7 @@ window.onload = () => {
   initializeMobileMenu();
   loadFileList();
 };
+
 
 
 

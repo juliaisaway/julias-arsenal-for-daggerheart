@@ -27,15 +27,12 @@ List the main pressures, instincts, or escalating goals as a short comma-separat
 
 Describe the passive feature.
 
+*Optional flavor line for this feature. Keep it as a standalone italic paragraph inside the Features section.*
+
 ### Feature Name - Reaction
 
 Describe the reaction feature.
 
-## Flavor
-
-Add the final reflective flavor line that should appear in italics in the compiled output.
-
 ## Design notes
 
 Optional author notes about the encounter goals, inspirations, balancing decisions, or playtest observations.
-

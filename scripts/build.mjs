@@ -644,11 +644,6 @@ function renderCompiledEnvironmentMarkdown(document) {
     ...renderFeatureBlock(sections.features),
   ];
 
-  if (sections.flavor) {
-    output.push("");
-    output.push(`*${sections.flavor}*`);
-  }
-
   appendDesignNotes(output, sections.designNotes);
 
   return `${output.join("\n").trim()}\n`;
@@ -738,7 +733,6 @@ function extractEnvironmentSections(body) {
   const descriptionLines = [];
   const impulsesLines = [];
   const featureLines = [];
-  const flavorLines = [];
   const designNotesLines = [];
   let currentSection = "description";
 
@@ -752,11 +746,6 @@ function extractEnvironmentSections(body) {
 
     if (/^##\s+Features/i.test(line)) {
       currentSection = "features";
-      continue;
-    }
-
-    if (/^##\s+Flavor/i.test(line)) {
-      currentSection = "flavor";
       continue;
     }
 
@@ -776,8 +765,6 @@ function extractEnvironmentSections(body) {
       impulsesLines.push(line);
     } else if (currentSection === "features") {
       featureLines.push(line);
-    } else if (currentSection === "flavor") {
-      flavorLines.push(line);
     } else if (currentSection === "designNotes") {
       designNotesLines.push(line);
     }
@@ -787,7 +774,6 @@ function extractEnvironmentSections(body) {
     description: collapseParagraph(descriptionLines),
     impulses: collapseParagraph(impulsesLines),
     features: featureLines,
-    flavor: collapseParagraph(flavorLines),
     designNotes: collapseParagraph(designNotesLines),
   };
 }
@@ -1092,6 +1078,9 @@ function formatPotentialAdversaries(value) {
     .filter(Boolean)
     .join(", ");
 }
+
+
+
 
 
 

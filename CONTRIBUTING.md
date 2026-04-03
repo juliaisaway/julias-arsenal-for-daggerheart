@@ -88,7 +88,8 @@ Use [templates/environment.template.md](./templates/environment.template.md) as 
 - `## Impulses` is rendered as a single summary line.
 - `## Features` is rendered under `## Environment Features` in the compiled output.
 - Feature headings should use `### Feature Name - Type`.
-- `## Flavor` is optional and, when present, is rendered as the final italicized line.
+- Environment flavor should live inside `## Features` as a standalone italic paragraph beneath the relevant feature.
+- Standalone italic paragraphs inside environment features are rendered with the `.flavor` styling.
 - `## Design notes` is optional and, when present, is rendered below the card in a separate notes block.
 
 ## Trap Rules
