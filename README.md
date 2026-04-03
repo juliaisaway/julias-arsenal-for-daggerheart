@@ -1,4 +1,4 @@
-# 👺 Julia's Arsenal for Daggerheart
+# ⚔️ Julia's Arsenal for Daggerheart
 
 Welcome to Julia's Arsenal for Daggerheart.
 
@@ -22,6 +22,12 @@ This fan project uses material inspired by:
 
 ---
 
+## ⌨️ Usage
+
+Just open the link [https://julias-arsenal.vercel.app/](https://julias-arsenal.vercel.app/) in your browser.
+
+---
+
 ## 💻 Commands
 
 No install step is required right now because the project has no dependencies.
@@ -33,12 +39,26 @@ npm run build
 Builds the compiled Markdown output into `dist/markdown/`.
 
 ```bash
+npm run dev
+```
+
+Starts a local development server.
+
+```bash
 npm run clean
 ```
 
 Removes generated files from `dist/`.
 
 For contribution guidelines, document structure, and content format rules, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+---
+
+## ⚠️ Important Notes
+
+This project was created by me, and *all* statblocks and game mechanics were designed entirely by a human.
+
+However, I used LLM-based AI tools integrated with VSCode to assist with the development of the build itself. While I do have programming knowledge, this approach helped me save time and focus more on designing and refining the game mechanics. I still don't think AI can create mechanics, lore or anything creative. But can be helpful as a coding assistant.
 
 ---
 
