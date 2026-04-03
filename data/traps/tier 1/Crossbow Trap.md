@@ -1,7 +1,7 @@
 ---
-tier: 2
+tier: 1
 type: harm
-difficulty: 15
+difficulty: 13
 ---
 
 # Crossbow Trap
@@ -36,4 +36,4 @@ A PC can attempt a Finesse Roll to disable the mechanism. They make this roll wi
 
 ## Design notes
 
-A really basic trap for adventures in any scenario. I think it can be adjusted to any Tier by just changing the difficulty and the damage.
+A really basic trap for adventures in any scenario. I think it can be adjusted to any Tier by just changing the difficulty.
