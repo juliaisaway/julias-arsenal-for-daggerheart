@@ -14,7 +14,7 @@ Introduce an unexpected threat, disrupt the scene, subvert player expectations.
 
 ## Features
 
-### Shot
+### Bear Release
 
 #### Trigger
 

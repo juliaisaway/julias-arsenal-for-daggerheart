@@ -10,7 +10,7 @@ A crude metal contraption lies hidden on the ground, its jaws slightly ajar. It 
 
 ## Features
 
-### Shot
+### Bear Release
 
 **Trigger:** When a PC interacts with or steps onto the trap
 
