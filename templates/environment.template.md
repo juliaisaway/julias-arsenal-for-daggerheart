@@ -34,3 +34,8 @@ Describe the reaction feature.
 ## Flavor
 
 Add the final reflective flavor line that should appear in italics in the compiled output.
+
+## Design notes
+
+Optional author notes about the encounter goals, inspirations, balancing decisions, or playtest observations.
+

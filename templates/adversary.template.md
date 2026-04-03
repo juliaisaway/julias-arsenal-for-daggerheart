@@ -42,3 +42,8 @@ Describe the passive feature.
 ### Feature Name - Action
 
 Describe the action feature.
+
+## Design notes
+
+Optional author notes about why this adversary exists, what inspired it, or how it is meant to be used.
+

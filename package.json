@@ -7,6 +7,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "clean": "node scripts/build.mjs --clean",
+    "deploy": "npx vercel --prod --yes",
     "watch-css": "sass public/styles/styles.scss public/styles/styles.css --watch --style=compressed",
     "dev": "concurrently \"npm run watch-css\" \"node scripts/server.js\""
   },

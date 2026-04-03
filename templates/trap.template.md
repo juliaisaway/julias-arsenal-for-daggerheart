@@ -36,3 +36,8 @@ Describe when a character can attempt to disable the trap.
 #### Effect
 
 Describe the roll, consequence, or result of the disarm attempt.
+
+## Design notes
+
+Optional author notes about the trap's intent, tuning, inspirations, or how it should feel in play.
+

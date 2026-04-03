@@ -1,12 +1,13 @@
 # Contributing
 
-This repository stores custom Daggerheart adversaries and environments as Markdown source files with frontmatter. The build script compiles those source files into presentation-ready Markdown inside `dist/markdown/`.
+This repository stores custom Daggerheart adversaries, environments, and traps as Markdown source files with frontmatter. The build script compiles those source files into presentation-ready Markdown inside `dist/markdown/`.
 
 ## Repository Structure
 
 - `data/`: source Markdown files
 - `data/adversaries/`: adversary source files grouped by tier
 - `data/environments/`: environment source files grouped by tier
+- `data/traps/`: trap source files grouped by tier
 - `templates/`: authoring templates
 - `scripts/build.mjs`: validation and compilation script
 - `dist/`: generated output recreated on every build
@@ -27,10 +28,11 @@ Removes generated files from `dist/`.
 
 ## Workflow
 
-1. Add or update source files under `data/adversaries/` or `data/environments/`.
+1. Add or update source files under `data/adversaries/`, `data/environments/`, or `data/traps/`.
 2. Start from the appropriate template:
    - [templates/adversary.template.md](./templates/adversary.template.md)
    - [templates/environment.template.md](./templates/environment.template.md)
+   - [templates/trap.template.md](./templates/trap.template.md)
 3. Run `npm run build`.
 4. Confirm the generated files under `dist/markdown/` look correct.
 5. Commit only the intended source and script changes.
@@ -60,6 +62,7 @@ Use [templates/adversary.template.md](./templates/adversary.template.md) as the 
 - `## Motives & Tactics` is rendered as a single summary line in the compiled output.
 - `## Features` should use `### Feature Name - Type` headings.
 - Feature text may include multiple paragraphs.
+- `## Design notes` is optional and, when present, is rendered below the card in a separate notes block.
 
 ## Environment Rules
 
@@ -86,9 +89,29 @@ Use [templates/environment.template.md](./templates/environment.template.md) as 
 - `## Features` is rendered under `## Environment Features` in the compiled output.
 - Feature headings should use `### Feature Name - Type`.
 - `## Flavor` is optional and, when present, is rendered as the final italicized line.
+- `## Design notes` is optional and, when present, is rendered below the card in a separate notes block.
+
+## Trap Rules
+
+Use [templates/trap.template.md](./templates/trap.template.md) as the source of truth for authoring structure.
+
+### Frontmatter Rules for Traps
+
+- `tier`: required, accepted values `1`, `2`, `3`, or `4`
+- `type`: required, accepted values `Harm`, `Snare`, `Debilitation`, `Hazard`, `Disruption`, or `Lockdown` case-insensitively
+- `difficulty`: required, non-negative number
+
+### Body Rules for Traps
+
+- The file must include a single H1 title.
+- `## Purpose` is rendered as a single summary line.
+- `## Features` should use `### Feature Name` headings.
+- Each trap feature should use `#### Trigger` and `#### Effect` subheadings.
+- Feature text may include multiple paragraphs.
+- `## Design notes` is optional and, when present, is rendered below the card in a separate notes block.
 
 ## Notes
 
 - Lines starting with `#` inside frontmatter are treated as comments by the build script.
 - `dist/` is generated output and can be rebuilt at any time.
-- Example reference files may live in `data/`, but the build script skips `EXAMPLE.md` and `EXAMPLE ENVIRONMENT.md`.
+- Example reference files may live in `data/`, but the build script skips `EXAMPLE.md`, `EXAMPLE ENVIRONMENT.md`, and `EXAMPLE TRAP.md`.
