@@ -1,7 +1,6 @@
 @use "functions";
 
 :root {
-
   /* Colors */
   --bg: radial-gradient(
     circle,
@@ -25,7 +24,7 @@
   --design-notes-border: #d08a73;
   --block-table-bg: #ffffff;
   --text-dark: #191919;
-  --text-light: #333;
+  --text-light: #3a3a3a;
   --file-li-selected-bg: var(--primary-color);
   --file-li-selected-color: #fff;
   --category-header-color: #aaa;
@@ -59,7 +58,8 @@
 
   @media (max-width: #{functions.rem(896)}) {
     --sidebar-width: 100%;
-    --sidebar-padding: #{functions.rem(20)} #{functions.rem(16)} #{functions.rem(24)};
+    --sidebar-padding: #{functions.rem(20)} #{functions.rem(16)}
+      #{functions.rem(24)};
     --content-padding: #{functions.rem(16)};
     --md-content-padding: 0;
     --card-padding: #{functions.rem(14)};

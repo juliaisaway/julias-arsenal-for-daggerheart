@@ -310,6 +310,7 @@ function renderAdversaryCard(md) {
   const designNotes = extractSection(body, /## Design notes/i);
   let processedFeatures = features ? features.replace(/### (.+?)\r?\n\r?\n/g, "### $1: ") : "";
   processedFeatures = processedFeatures.replace(/### (.+?):\s*(.+)/g, "**_$1:_** $2");
+  processedFeatures = markFeatureLeadParagraphs(withExternalTargets(marked.parse(processedFeatures || "")));
 
   let blockTable = `<div class="block-table">`;
   blockTable += `<div class="block-content">`;
@@ -339,7 +340,7 @@ function renderAdversaryCard(md) {
         <div>${motives ? `<strong>Motives & Tactics:</strong> ${parseInlineWithExternalTargets(motives)}` : ""}</div>
         ${blockTable}
         <h2>Features</h2>
-        <div>${withExternalTargets(marked.parse(processedFeatures || ""))}</div>
+        <div class="feature-copy">${processedFeatures}</div>
       </div>
       ${renderDesignNotes(designNotes)}
     </div>
@@ -357,6 +358,7 @@ function renderEnvironmentCard(md) {
   let processedFeatures = features ? features.replace(/### (.+?)\r?\n\r?\n/g, "### $1: ") : "";
   processedFeatures = processedFeatures.replace(/### (.+?):\s*(.+)/g, "**_$1:_** $2");
   processedFeatures = applyFlavorParagraphs(withExternalTargets(marked.parse(processedFeatures || "")));
+  processedFeatures = markFeatureLeadParagraphs(processedFeatures);
 
   const blockTable = `
     <div class="block-table">
@@ -378,7 +380,7 @@ function renderEnvironmentCard(md) {
         </div>
         ${blockTable}
         <h2>Features</h2>
-        <div class="environment-features">${processedFeatures}</div>
+        <div class="feature-copy environment-features">${processedFeatures}</div>
       </div>
       ${renderDesignNotes(designNotes)}
     </div>
@@ -411,7 +413,7 @@ function renderTrapCard(md) {
         <div>${purpose ? `<strong>Purpose:</strong> ${parseInlineWithExternalTargets(purpose)}` : ""}</div>
         ${blockTable}
         <h2>Features</h2>
-        <div>${withExternalTargets(features || "<p>No features listed.</p>")}</div>
+        <div class="feature-copy">${withExternalTargets(features || "<p>No features listed.</p>")}</div>
       </div>
       ${renderDesignNotes(designNotes)}
     </div>
@@ -604,6 +606,10 @@ function renderDesignNotes(designNotes) {
 
 function applyFlavorParagraphs(html) {
   return html.replace(/<p><em>([\s\S]*?)<\/em><\/p>/g, '<p class="flavor"><em>$1</em></p>');
+}
+
+function markFeatureLeadParagraphs(html) {
+  return html.replace(/<p><strong>/g, '<p class="feature-lead"><strong>');
 }
 
 function formatCategoryLabel(category) {

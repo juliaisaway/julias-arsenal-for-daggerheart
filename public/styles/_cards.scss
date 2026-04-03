@@ -73,7 +73,6 @@
 
   .summary {
     font-size: #{functions.rem(16)};
-    color: var(--text-light);
     margin-bottom: 8px;
 
     @media (max-width: #{functions.rem(896)}) {
@@ -85,7 +84,7 @@
   .flavor {
     font-style: italic;
     color: var(--text-light);
-    margin-top: 16px;
+    margin-top: 8px;
     margin-left: 16px;
     text-indent: 0;
   }
@@ -93,16 +92,34 @@
   p {
     margin: var(--p-margin);
     margin-left: 16px;
-    text-indent: -16px;
 
     @media (max-width: #{functions.rem(896)}) {
       font-size: #{functions.rem(15.2)};
       line-height: 1.45;
     }
+  }
+
+  .feature-copy {
+    p {
+      margin-left: 16px;
+      text-indent: 0;
+    }
+
+    p.feature-lead {
+      margin-left: 16px;
+      text-indent: -16px;
+    }
+
+    p.flavor {
+      margin-left: 16px;
+      text-indent: 0;
+    }
 
     @media (max-width: #{functions.rem(640)}) {
-      margin-left: 0;
-      text-indent: 0;
+      p.feature-lead {
+        margin-left: 0;
+        text-indent: 0;
+      }
     }
   }
 
@@ -135,7 +152,7 @@
 
   ul,
   ol {
-    margin-left: 0;
+    margin: 8px 0;
   }
 
   a {
