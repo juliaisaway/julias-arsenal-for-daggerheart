@@ -12,7 +12,7 @@ A robed spellbreaker trained to unravel arcane forces, he bend magical currents 
 
 ## Features
 
-**Spellward - Passive:** The Name has resistance to magic damage.
+**Spellward - Passive:** The Arcanist has resistance to magic damage.
 
 **Arcane Barrier - Action:** Mark a Stress and choose an ally within Far range to create a barrier around them. Until they next take damage, they gain one of the following effects:
 

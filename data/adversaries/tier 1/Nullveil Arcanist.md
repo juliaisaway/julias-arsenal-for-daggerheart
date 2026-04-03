@@ -25,7 +25,7 @@ Protect key allies, disrupt spellcasters, reposition to avoid pressure
 
 ### Spellward - Passive
 
-The Name has resistance to magic damage.
+The Arcanist has resistance to magic damage.
 
 ### Arcane Barrier - Action
 
