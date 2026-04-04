@@ -167,8 +167,7 @@
   margin: var(--card-margin);
 }
 
-.mechanic-page,
-.condition-list {
+.mechanic-page {
   display: grid;
   gap: var(--card-stack-gap);
 }
@@ -331,7 +330,7 @@
     text-indent: 0;
   }
 
-  .condition-intro {
+  .mechanic-intro {
     margin-bottom: #{functions.rem(20)};
 
     h2,
@@ -380,3 +379,4 @@
     margin-left: 0;
   }
 }
+

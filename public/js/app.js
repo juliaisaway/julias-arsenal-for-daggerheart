@@ -1,11 +1,11 @@
 let isMobileMenuOpen = false;
+let dataFiles = [];
+let mechanicPages = [];
 const STATIC_PAGE_HOME = "home";
 const STATIC_PAGE_CHANGELOG = "changelog";
-const STATIC_PAGE_CONDITIONS = "conditions";
 const STATIC_PAGE_FILES = {
   [STATIC_PAGE_HOME]: "/content/index.md",
   [STATIC_PAGE_CHANGELOG]: "/content/changelog.md",
-  [STATIC_PAGE_CONDITIONS]: "/content/conditions.md",
 };
 
 function withExternalTargets(html) {
@@ -92,14 +92,28 @@ function initializeMobileMenu() {
 }
 
 async function loadFileList() {
-  const res = await fetch("/api/list");
-  const files = await res.json();
-  const sidebar = document.getElementById("sidebar");
+  try {
+    [dataFiles, mechanicPages] = await Promise.all([
+      fetchJson("/api/list"),
+      fetchJson("/api/mechanics", []),
+    ]);
+  } catch (error) {
+    console.error("Failed to load site content", error);
+    const content = document.getElementById("md-content");
+    if (content) {
+      content.innerHTML = renderStaticMarkdown(
+        "# Content unavailable\n\nThere was a problem loading the site content.",
+      );
+      syncFeatherIcons();
+    }
+    return;
+  }
 
+  const sidebar = document.getElementById("sidebar");
   const mainTitle = sidebar.querySelector("h1");
   sidebar.innerHTML = "";
   sidebar.appendChild(mainTitle);
-  appendStaticNavigation(sidebar);
+  appendStaticNavigation(sidebar, mechanicPages);
 
   const organized = {
     adversaries: {},
@@ -107,7 +121,7 @@ async function loadFileList() {
     traps: {},
   };
 
-  files.forEach((file) => {
+  dataFiles.forEach((file) => {
     const parts = file.split("/");
 
     if (parts.length < 3) {
@@ -209,15 +223,22 @@ async function selectFile(file, link) {
   syncFeatherIcons();
 }
 
-function appendStaticNavigation(sidebar) {
+function appendStaticNavigation(sidebar, mechanics) {
   appendNavigationSection(sidebar, "Pages", [
     { label: "Home", route: STATIC_PAGE_HOME },
     { label: "Changelog", route: STATIC_PAGE_CHANGELOG },
   ]);
 
-  appendNavigationSection(sidebar, "Mechanics", [
-    { label: "Conditions", route: STATIC_PAGE_CONDITIONS },
-  ]);
+  if (mechanics.length > 0) {
+    appendNavigationSection(
+      sidebar,
+      "Mechanics",
+      mechanics.map((page) => ({
+        label: page.title,
+        route: getMechanicRoute(page.slug),
+      })),
+    );
+  }
 }
 
 function appendNavigationSection(sidebar, title, pages) {
@@ -274,7 +295,7 @@ async function loadInitialRoute() {
     return;
   }
 
-  if (route === STATIC_PAGE_CHANGELOG || route === STATIC_PAGE_CONDITIONS) {
+  if (route === STATIC_PAGE_CHANGELOG || isMechanicRoute(route)) {
     const pageLink = document.querySelector(`#sidebar a[data-page="${route}"]`);
     selectStaticPage(route, pageLink);
     return;
@@ -298,6 +319,20 @@ async function loadInitialRoute() {
 
 async function renderStaticPage(page) {
   const content = document.getElementById("md-content");
+
+  if (isMechanicRoute(page)) {
+    try {
+      content.innerHTML = await renderMechanicPage(page);
+    } catch (error) {
+      content.innerHTML = renderStaticMarkdown(
+        `# Content unavailable\n\nThere was a problem loading this page.`,
+      );
+    }
+
+    syncFeatherIcons();
+    return;
+  }
+
   const filePath = STATIC_PAGE_FILES[page];
 
   if (!filePath) {
@@ -307,12 +342,6 @@ async function renderStaticPage(page) {
   }
 
   try {
-    if (page === STATIC_PAGE_CONDITIONS) {
-      content.innerHTML = await renderConditionsPage(filePath);
-      syncFeatherIcons();
-      return;
-    }
-
     const res = await fetch(filePath);
 
     if (!res.ok) {
@@ -330,56 +359,53 @@ async function renderStaticPage(page) {
   syncFeatherIcons();
 }
 
-async function renderConditionsPage(introPath) {
-  const [introResponse, listResponse] = await Promise.all([
-    fetch(introPath),
-    fetch("/api/list"),
-  ]);
+async function renderMechanicPage(route) {
+  const page = mechanicPages.find((entry) => getMechanicRoute(entry.slug) === route);
 
-  if (!introResponse.ok) {
-    throw new Error(`Unable to load ${introPath}`);
+  if (!page) {
+    return renderStaticMarkdown("# Page not found");
   }
 
-  if (!listResponse.ok) {
-    throw new Error("Unable to load conditions list");
+  const introResponse = await fetch(page.filePath);
+
+  if (!introResponse.ok) {
+    throw new Error(`Unable to load ${page.filePath}`);
   }
 
   const introMarkdown = await introResponse.text();
-  const files = await listResponse.json();
-  const conditionFiles = files
-    .filter((file) => file.startsWith("conditions/") && file.endsWith(".md"))
+  const { body: introBody } = parseFrontmatter(introMarkdown);
+  const matchingDataFiles = dataFiles
+    .filter((file) => file.startsWith(`${page.slug}/`) && file.endsWith(".md"))
     .sort((left, right) => left.localeCompare(right));
 
-  const conditionMarkdown = await Promise.all(
-    conditionFiles.map(async (file) => {
-      const response = await fetch(
-        `/api/file?path=${encodeURIComponent(file)}`,
-      );
+  const mechanicEntries = await Promise.all(
+    matchingDataFiles.map(async (file) => {
+      const response = await fetch(`/api/file?path=${encodeURIComponent(file)}`);
 
       if (!response.ok) {
         throw new Error(`Unable to load ${file}`);
       }
 
+      const markdown = await response.text();
+      const { meta, body } = parseFrontmatter(markdown);
+
       return {
         file,
-        markdown: await response.text(),
+        meta,
+        body,
       };
     }),
   );
 
-  const sortedConditions = conditionMarkdown.sort((left, right) => {
-    const leftTitle = extractMarkdownHeading(left.markdown) || left.file;
-    const rightTitle = extractMarkdownHeading(right.markdown) || right.file;
-    return leftTitle.localeCompare(rightTitle);
-  });
+  const sortedEntries = mechanicEntries.sort(compareMechanicEntries);
 
   return `
     <div class="mechanic-page">
       <div class="card-stack">
         <div class="mechanic-card">
           <div class="mechanic-copy">
-            ${demoteHtmlHeadings(withExternalTargets(marked.parse(introMarkdown)))}
-            ${sortedConditions.map((entry) => renderConditionSection(entry.markdown)).join("")}
+            <div class="mechanic-intro">${demoteHtmlHeadings(withExternalTargets(marked.parse(introBody)))}</div>
+            ${sortedEntries.map((entry) => renderMechanicSection(entry)).join("")}
           </div>
         </div>
       </div>
@@ -538,9 +564,9 @@ function renderTrapCard(md) {
   `;
 }
 
-function renderConditionSection(md) {
-  const title = extractMarkdownHeading(md);
-  const body = removeMarkdownHeading(md).trim();
+function renderMechanicSection(entry) {
+  const title = extractMarkdownHeading(entry.body) || stripMarkdownExtension(entry.file);
+  const body = removeMarkdownHeading(entry.body).trim();
   const renderedBody = body
     ? demoteHtmlHeadings(withExternalTargets(marked.parse(body)))
     : "<p>No description provided.</p>";
@@ -853,7 +879,89 @@ function removeMarkdownHeading(markdown) {
   return markdown.replace(/^#\s+.+$\r?\n?/m, "").trimStart();
 }
 
+function stripMarkdownExtension(value) {
+  return String(value).replace(/\.md$/i, "");
+}
+
+function compareMechanicEntries(left, right) {
+  const leftOrder = normalizeOrderValue(left.meta?.order);
+  const rightOrder = normalizeOrderValue(right.meta?.order);
+
+  if (leftOrder !== null && rightOrder !== null && leftOrder !== rightOrder) {
+    return leftOrder - rightOrder;
+  }
+
+  if (leftOrder !== null && rightOrder === null) {
+    return -1;
+  }
+
+  if (leftOrder === null && rightOrder !== null) {
+    return 1;
+  }
+
+  const leftTitle = extractMarkdownHeading(left.body) || stripMarkdownExtension(left.file);
+  const rightTitle = extractMarkdownHeading(right.body) || stripMarkdownExtension(right.file);
+  return leftTitle.localeCompare(rightTitle);
+}
+
+function normalizeOrderValue(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
+
+function getMechanicRoute(slug) {
+  return `mechanic/${slug}`;
+}
+
+function isMechanicRoute(route) {
+  return route.startsWith("mechanic/");
+}
+
 window.onload = () => {
   initializeMobileMenu();
   loadFileList();
 };
+
+async function fetchJson(url, fallbackValue) {
+  let response;
+
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    if (fallbackValue !== undefined) {
+      console.warn(`Request failed for ${url}; using fallback.`, error);
+      return fallbackValue;
+    }
+
+    throw error;
+  }
+
+  const text = await response.text();
+
+  if (!response.ok) {
+    if (fallbackValue !== undefined) {
+      console.warn(`Request failed for ${url}; using fallback.`, {
+        status: response.status,
+        body: text,
+      });
+      return fallbackValue;
+    }
+
+    throw new Error(`Request failed for ${url} with status ${response.status}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    if (fallbackValue !== undefined) {
+      console.warn(`Invalid JSON returned by ${url}; using fallback.`, text);
+      return fallbackValue;
+    }
+
+    throw new Error(`Invalid JSON returned by ${url}`);
+  }
+}
