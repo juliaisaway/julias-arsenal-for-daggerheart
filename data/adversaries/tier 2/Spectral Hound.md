@@ -37,8 +37,8 @@ While Hidden, mark a Stress to emerge into Melee range of a target within Very C
 
 ### Ghostly Roar - Action
 
-Spend a Fear to roar, causing a spectral energy to propagante. All targets within Close range must succeed on an Presence Reaction Roll (14) or take 2d8 magic damage and become Vulnerable temporarily.
+Spend a Fear to roar, causing a spectral energy to propagate. All targets within Close range must succeed on an Presence Reaction Roll (14) or take 2d8 magic damage and become Vulnerable temporarily.
 
 ## Design notes
 
-This is my take on the *Stonewraith* from the [*Daggerheart System Reference Document*](https://www.daggerheart.com/srd/), but changed to be a Spectral unit, alongsidse *Spectral Guardian*, *Spectral Captain* and *Spectral Archer*.
+This is my take on the *Stonewraith* from the [*Daggerheart System Reference Document*](https://www.daggerheart.com/srd/), but changed to be a Spectral unit, alongside *Spectral Guardian*, *Spectral Captain* and *Spectral Archer*.
