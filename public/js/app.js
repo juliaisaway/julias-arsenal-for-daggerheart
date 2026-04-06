@@ -1,8 +1,15 @@
 let isMobileMenuOpen = false;
+let activeMobileSidebarPanel = "primary";
 let dataFiles = [];
 let mechanicPages = [];
+let organizedContent = {
+  adversaries: {},
+  environments: {},
+  traps: {},
+};
 const filePathToRoute = new Map();
 const routeToFilePath = new Map();
+const CATEGORY_ORDER = ["adversaries", "environments", "traps"];
 const STATIC_PAGE_HOME = "/";
 const STATIC_PAGE_CHANGELOG = "/changelog/";
 const STATIC_PAGE_FILES = {
@@ -93,6 +100,10 @@ function getDataFileRoute(filePath) {
   return `/${slugifySegment(category)}/${slugifySegment(tier)}/${slugifySegment(stripMarkdownExtension(fileName))}/`;
 }
 
+function getCategoryLandingRoute(category) {
+  return `/${slugifySegment(category)}/`;
+}
+
 function getCanonicalRoute(route) {
   if (route === STATIC_PAGE_HOME) {
     return STATIC_PAGE_HOME;
@@ -115,6 +126,68 @@ function updateRouteMaps() {
     ...page,
     route: getMechanicRoute(page.slug),
   }));
+}
+
+function buildOrganizedContent() {
+  organizedContent = {
+    adversaries: {},
+    environments: {},
+    traps: {},
+  };
+
+  dataFiles.forEach((file) => {
+    const parts = file.split("/");
+
+    if (parts.length < 3) {
+      return;
+    }
+
+    const [category, tier, fileName] = parts;
+
+    if (!organizedContent[category]) {
+      return;
+    }
+
+    if (!organizedContent[category][tier]) {
+      organizedContent[category][tier] = [];
+    }
+
+    organizedContent[category][tier].push({
+      name: fileName.replace(/\.md$/i, ""),
+      path: file,
+      route: filePathToRoute.get(file),
+    });
+  });
+}
+
+function getFileCategory(filePath) {
+  return String(filePath).split("/")[0] || "";
+}
+
+function getCategoryEntries(category) {
+  return organizedContent[category] || {};
+}
+
+function getFirstCategoryFile(category) {
+  const entries = getCategoryEntries(category);
+  const tiers = Object.keys(entries).sort(compareTierLabels);
+  const firstTier = tiers[0];
+
+  if (!firstTier) {
+    return null;
+  }
+
+  const files = [...entries[firstTier]].sort((left, right) =>
+    left.name.localeCompare(right.name),
+  );
+
+  return files[0] || null;
+}
+
+function hasDetailSidebarContent(category) {
+  return Boolean(
+    category && Object.keys(getCategoryEntries(category)).length > 0,
+  );
 }
 
 function pushBrowserRoute(route) {
@@ -141,23 +214,44 @@ function syncFeatherIcons() {
   }
 }
 
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 56rem)").matches;
+}
+
 function setMobileMenuState(isOpen) {
   isMobileMenuOpen = isOpen;
 
-  const sidebar = document.getElementById("sidebar");
+  const primarySidebar = document.getElementById("sidebar");
+  const detailSidebar = document.getElementById("detail-sidebar");
   const toggle = document.getElementById("menu-toggle");
   const backdrop = document.getElementById("sidebar-backdrop");
 
-  if (!sidebar || !toggle || !backdrop) {
+  if (!primarySidebar || !detailSidebar || !toggle || !backdrop) {
     return;
   }
 
-  sidebar.classList.toggle("is-open", isOpen);
+  primarySidebar.classList.toggle(
+    "is-open",
+    isOpen && activeMobileSidebarPanel === "primary",
+  );
+  detailSidebar.classList.toggle(
+    "is-open",
+    isOpen && activeMobileSidebarPanel === "detail",
+  );
   backdrop.hidden = !isOpen;
   toggle.setAttribute("aria-expanded", String(isOpen));
   toggle.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
   document.body.classList.toggle("menu-open", isOpen);
   setMenuIcon(isOpen ? "x" : "menu");
+}
+
+function setActiveMobileSidebarPanel(panel) {
+  activeMobileSidebarPanel = panel;
+  document.body.classList.toggle("mobile-detail-panel", panel === "detail");
+
+  if (isMobileMenuOpen) {
+    setMobileMenuState(true);
+  }
 }
 
 function closeMobileMenuIfNeeded() {
@@ -206,99 +300,27 @@ async function loadFileList() {
   }
 
   updateRouteMaps();
-
-  const sidebar = document.getElementById("sidebar");
-  const mainTitle = sidebar.querySelector("h1");
-  sidebar.innerHTML = "";
-  sidebar.appendChild(mainTitle);
-  appendStaticNavigation(sidebar, mechanicPages);
-
-  const organized = {
-    adversaries: {},
-    environments: {},
-    traps: {},
-  };
-
-  dataFiles.forEach((file) => {
-    const parts = file.split("/");
-
-    if (parts.length < 3) {
-      return;
-    }
-
-    const [category, tier, fileName] = parts;
-
-    if (!organized[category]) {
-      return;
-    }
-
-    if (!organized[category][tier]) {
-      organized[category][tier] = [];
-    }
-
-    organized[category][tier].push({
-      name: fileName.replace(/\.md$/i, ""),
-      path: file,
-      route: filePathToRoute.get(file),
-    });
-  });
-
-  Object.keys(organized).forEach((category) => {
-    const categoryEntries = organized[category];
-
-    if (Object.keys(categoryEntries).length === 0) {
-      return;
-    }
-
-    const section = createSidebarSection(formatCategoryLabel(category), category);
-    const categoryHeader = document.createElement("h2");
-    categoryHeader.className = `category-header ${category}`;
-    categoryHeader.textContent = formatCategoryLabel(category);
-    section.appendChild(categoryHeader);
-
-    Object.keys(categoryEntries)
-      .sort(compareTierLabels)
-      .forEach((tier) => {
-        const tierGroup = document.createElement("div");
-        tierGroup.className = "tier-group";
-
-        const tierHeader = document.createElement("h3");
-        tierHeader.className = "tier-header";
-        tierHeader.textContent = capitalizeWords(tier);
-        tierGroup.appendChild(tierHeader);
-
-        const ul = document.createElement("ul");
-        ul.className = "file-sublist";
-
-        categoryEntries[tier]
-          .sort((left, right) => left.name.localeCompare(right.name))
-          .forEach((file) => {
-            const li = document.createElement("li");
-            const link = document.createElement("a");
-            link.href = file.route;
-            link.textContent = file.name;
-            link.dataset.route = file.route;
-            link.addEventListener("click", (event) => {
-              event.preventDefault();
-              selectFile(file.path, link, { history: "push" });
-            });
-            li.appendChild(link);
-            ul.appendChild(li);
-          });
-
-        tierGroup.appendChild(ul);
-        section.appendChild(tierGroup);
-      });
-
-    sidebar.appendChild(section);
-  });
+  buildOrganizedContent();
+  renderPrimarySidebar();
 
   await loadInitialRoute();
 }
 
 async function selectFile(file, link, options = {}) {
   const { history = "replace" } = options;
+  const category = getFileCategory(file);
   clearSidebarSelection();
+  renderDetailSidebar(category, file);
+  setActiveMobileSidebarPanel("detail");
+
+  const categoryLink = document.querySelector(
+    `#sidebar a[data-category-link="${category}"]`,
+  );
+
+  if (categoryLink) {
+    categoryLink.classList.add("selected");
+    categoryLink.setAttribute("aria-current", "page");
+  }
 
   if (link) {
     link.classList.add("selected");
@@ -357,6 +379,155 @@ function appendStaticNavigation(sidebar, mechanics) {
   }
 }
 
+function renderPrimarySidebar() {
+  const sidebar = document.getElementById("sidebar");
+
+  if (!sidebar) {
+    return;
+  }
+
+  const mainTitle = document.createElement("div");
+  mainTitle.className = "site-brand";
+  mainTitle.setAttribute("aria-hidden", "true");
+  mainTitle.innerHTML = `Julia's Arsenal for <span>Daggerheart</span>`;
+  sidebar.innerHTML = "";
+  sidebar.appendChild(mainTitle);
+  appendStaticNavigation(sidebar, mechanicPages);
+  appendContentOverviewSections(sidebar);
+}
+
+function appendContentOverviewSections(sidebar) {
+  CATEGORY_ORDER.forEach((category) => {
+    if (!hasDetailSidebarContent(category)) {
+      return;
+    }
+
+    const section = createSidebarSection(
+      formatCategoryLabel(category),
+      category,
+    );
+    const categoryHeader = document.createElement("h2");
+    categoryHeader.className = `category-header ${category}`;
+    categoryHeader.textContent = formatCategoryLabel(category);
+    section.appendChild(categoryHeader);
+
+    const list = document.createElement("ul");
+    list.className = "file-sublist static-pages";
+
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    const firstFile = getFirstCategoryFile(category);
+    const route = getCategoryLandingRoute(category);
+
+    link.href = route;
+    link.textContent = "View all";
+    link.dataset.categoryLink = category;
+    link.dataset.route = route;
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      if (!firstFile) {
+        return;
+      }
+
+      if (isMobileViewport()) {
+        clearSidebarSelection();
+        link.classList.add("selected");
+        link.setAttribute("aria-current", "page");
+        renderDetailSidebar(category);
+        setActiveMobileSidebarPanel("detail");
+        return;
+      }
+
+      setActiveMobileSidebarPanel("detail");
+      selectFile(firstFile.path, null, { history: "push" });
+    });
+
+    item.appendChild(link);
+    list.appendChild(item);
+    section.appendChild(list);
+    sidebar.appendChild(section);
+  });
+}
+
+function renderDetailSidebar(category, activeFilePath) {
+  const detailSidebar = document.getElementById("detail-sidebar");
+
+  if (!detailSidebar) {
+    return;
+  }
+
+  detailSidebar.innerHTML = "";
+  document.body.classList.toggle(
+    "has-detail-sidebar",
+    hasDetailSidebarContent(category),
+  );
+
+  if (!hasDetailSidebarContent(category)) {
+    detailSidebar.setAttribute("aria-hidden", "true");
+    setActiveMobileSidebarPanel("primary");
+    return;
+  }
+
+  detailSidebar.setAttribute("aria-hidden", "false");
+
+  const mobileBackButton = document.createElement("button");
+  mobileBackButton.type = "button";
+  mobileBackButton.className = "detail-sidebar-back";
+  mobileBackButton.innerHTML = `${window.feather?.icons?.chevronLeft?.toSvg() || ""}<span>← Back to sections</span>`;
+  mobileBackButton.addEventListener("click", () => {
+    setActiveMobileSidebarPanel("primary");
+  });
+  detailSidebar.appendChild(mobileBackButton);
+
+  const section = createSidebarSection(formatCategoryLabel(category), category);
+  const categoryHeader = document.createElement("h2");
+  categoryHeader.className = `category-header ${category}`;
+  categoryHeader.textContent = formatCategoryLabel(category);
+  section.appendChild(categoryHeader);
+
+  Object.keys(getCategoryEntries(category))
+    .sort(compareTierLabels)
+    .forEach((tier) => {
+      const tierGroup = document.createElement("div");
+      tierGroup.className = "tier-group";
+
+      const tierHeader = document.createElement("h3");
+      tierHeader.className = "tier-header";
+      tierHeader.textContent = capitalizeWords(tier);
+      tierGroup.appendChild(tierHeader);
+
+      const ul = document.createElement("ul");
+      ul.className = "file-sublist";
+
+      [...getCategoryEntries(category)[tier]]
+        .sort((left, right) => left.name.localeCompare(right.name))
+        .forEach((file) => {
+          const li = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = file.route;
+          link.textContent = file.name;
+          link.dataset.route = file.route;
+          if (file.path === activeFilePath) {
+            link.classList.add("selected");
+            link.setAttribute("aria-current", "page");
+          }
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            selectFile(file.path, link, { history: "push" });
+          });
+          li.appendChild(link);
+          ul.appendChild(li);
+        });
+
+      tierGroup.appendChild(ul);
+      section.appendChild(tierGroup);
+    });
+
+  detailSidebar.appendChild(section);
+  syncFeatherIcons();
+}
+
 function appendNavigationSection(sidebar, title, pages) {
   const section = createSidebarSection(title, title.toLowerCase());
   const categoryHeader = document.createElement("h2");
@@ -394,7 +565,7 @@ function createSidebarSection(title, className) {
 }
 
 function clearSidebarSelection() {
-  document.querySelectorAll("#sidebar a").forEach((el) => {
+  document.querySelectorAll("#sidebar a, #detail-sidebar a").forEach((el) => {
     el.classList.remove("selected");
     el.removeAttribute("aria-current");
   });
@@ -403,6 +574,8 @@ function clearSidebarSelection() {
 function selectStaticPage(page, link, options = {}) {
   const { history = "replace" } = options;
   clearSidebarSelection();
+  renderDetailSidebar(null);
+  setActiveMobileSidebarPanel("primary");
 
   if (page !== STATIC_PAGE_HOME && link) {
     link.classList.add("selected");
@@ -439,11 +612,9 @@ async function loadInitialRoute() {
     return;
   }
 
-  const fileLink = Array.from(document.querySelectorAll(".file-sublist a")).find(
-    (link) =>
-      !link.dataset.page &&
-      normalizeAppRoute(link.dataset.route || link.getAttribute("href")) ===
-        normalizeAppRoute(resolvedRoute.route),
+  renderDetailSidebar(getFileCategory(resolvedRoute.file), resolvedRoute.file);
+  const fileLink = document.querySelector(
+    `#detail-sidebar a[data-route="${resolvedRoute.route}"]`,
   );
 
   if (fileLink) {
@@ -519,7 +690,9 @@ async function renderMechanicPage(route) {
 
   const mechanicEntries = await Promise.all(
     matchingDataFiles.map(async (file) => {
-      const response = await fetch(`/api/file?path=${encodeURIComponent(file)}`);
+      const response = await fetch(
+        `/api/file?path=${encodeURIComponent(file)}`,
+      );
 
       if (!response.ok) {
         throw new Error(`Unable to load ${file}`);
@@ -704,7 +877,8 @@ function renderTrapCard(md) {
 }
 
 function renderMechanicSection(entry) {
-  const title = extractMarkdownHeading(entry.body) || stripMarkdownExtension(entry.file);
+  const title =
+    extractMarkdownHeading(entry.body) || stripMarkdownExtension(entry.file);
   const body = removeMarkdownHeading(entry.body).trim();
   const renderedBody = body
     ? demoteHtmlHeadings(withExternalTargets(marked.parse(body)))
@@ -978,7 +1152,9 @@ function formatPotentialAdversaries(potentialAdversaries) {
   for (const line of lines) {
     if (line.startsWith("- group:")) {
       if (currentGroup) {
-        groups.push(formatPotentialAdversaryGroup(currentGroup, currentEntries));
+        groups.push(
+          formatPotentialAdversaryGroup(currentGroup, currentEntries),
+        );
       }
 
       currentGroup = line.replace("- group:", "").trim();
@@ -1006,9 +1182,7 @@ function formatPotentialAdversaries(potentialAdversaries) {
     groups.push(formatPotentialAdversaryGroup(currentGroup, currentEntries));
   }
 
-  return groups
-    .map((group) => parseInline(group))
-    .join(", ");
+  return groups.map((group) => parseInline(group)).join(", ");
 }
 
 function formatPotentialAdversaryGroup(group, entries) {
@@ -1044,8 +1218,10 @@ function compareMechanicEntries(left, right) {
     return 1;
   }
 
-  const leftTitle = extractMarkdownHeading(left.body) || stripMarkdownExtension(left.file);
-  const rightTitle = extractMarkdownHeading(right.body) || stripMarkdownExtension(right.file);
+  const leftTitle =
+    extractMarkdownHeading(left.body) || stripMarkdownExtension(left.file);
+  const rightTitle =
+    extractMarkdownHeading(right.body) || stripMarkdownExtension(right.file);
   return leftTitle.localeCompare(rightTitle);
 }
 
@@ -1067,7 +1243,9 @@ function isMechanicRoute(route) {
 }
 
 function resolveCurrentRoute() {
-  const legacyHashRoute = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+  const legacyHashRoute = decodeURIComponent(
+    window.location.hash.replace(/^#/, ""),
+  );
 
   if (legacyHashRoute) {
     return resolveLegacyHashRoute(legacyHashRoute);
@@ -1153,6 +1331,26 @@ function resolveAppRoute(route) {
     };
   }
 
+  const matchingCategory = CATEGORY_ORDER.find(
+    (category) =>
+      normalizeAppRoute(getCategoryLandingRoute(category)) === normalizedRoute,
+  );
+
+  if (matchingCategory) {
+    const firstFile = getFirstCategoryFile(matchingCategory);
+
+    if (!firstFile) {
+      return null;
+    }
+
+    return {
+      kind: "file",
+      file: firstFile.path,
+      route: firstFile.route,
+      redirect: true,
+    };
+  }
+
   const file = routeToFilePath.get(normalizedRoute);
 
   if (!file) {
@@ -1203,8 +1401,12 @@ function handleDocumentNavigation(event) {
   event.preventDefault();
 
   if (resolvedRoute.kind === "file") {
+    renderDetailSidebar(
+      getFileCategory(resolvedRoute.file),
+      resolvedRoute.file,
+    );
     const fileLink = document.querySelector(
-      `#sidebar a[data-route="${resolvedRoute.route}"]`,
+      `#detail-sidebar a[data-route="${resolvedRoute.route}"]`,
     );
     selectFile(resolvedRoute.file, fileLink, { history: "push" });
     return;

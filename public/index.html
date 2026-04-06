@@ -16,7 +16,7 @@
   </head>
   <body>
     <header id="mobile-header">
-      <div class="site-title">Julia's Arsenal for <span>Daggerheart</span></div>
+      <h1 class="site-title">Julia's Arsenal for <span>Daggerheart</span></h1>
       <button
         id="menu-toggle"
         type="button"
@@ -30,9 +30,11 @@
     <div id="sidebar-backdrop" hidden></div>
     <div id="container">
       <aside id="sidebar">
-        <h1>Julia's Arsenal for <span>Daggerheart</span></h1>
-        <ul id="file-list"></ul>
+        <div class="site-brand" aria-hidden="true">
+          Julia's Arsenal for <span>Daggerheart</span>
+        </div>
       </aside>
+      <aside id="detail-sidebar" aria-hidden="true"></aside>
       <div id="main-column">
         <main id="content">
           <div id="md-content"></div>
