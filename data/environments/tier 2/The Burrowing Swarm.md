@@ -7,8 +7,10 @@ potentialAdversaries:
     list:
       - Silkwing Broodmother
       - Silkwing Cluster
-      - Silkwing Strider
-      - Silkwing Devourer
+      - Silkwing Consort
+      - Silkwing Webspitter
+      - [Silkwing Strider](/adversaries/tier-2/silkwing-strider/ "Silkwing Strider")
+      - [Silkwing Devourer](/adversaries/tier-2/silkwing-devourer/ "Silkwing Devourer")
 ---
 
 # The Burrowing Swarm

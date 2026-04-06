@@ -22,4 +22,4 @@ A gleaming golden skull, set with precious gems, rests atop a pedestal. Its surf
 
 **Effect:** The skull eagerly consumes wealth. If the party offers at least 2 Chests of Gold, the skull is satisfied. It lets out a final remark before vanishing.
 
-> **Design notes:** This hazard creates persistent psychological pressure rather than immediate danger. I took this concept from Yaka, an NPC from the [Tomb of Annihilation](https://www.dndbeyond.com/sources/dnd/toa) Campaign, from the *5th Edition*. It's a funny concept to explore.
+> **Design notes:** This hazard creates persistent psychological pressure rather than immediate danger. I took this concept from Yaka, an NPC from the [Tomb of Annihilation](https://www.dndbeyond.com/sources/dnd/toa "Tomb of Annihilation") Campaign, from the *5th Edition*. It's a funny concept to explore.

@@ -137,6 +137,12 @@
 
     .block-content {
       padding: var(--block-padding);
+
+      a {
+        text-decoration-style: dotted;
+        color: var(--text-dark);
+        font-weight: 400;
+      }
     }
 
     strong {
@@ -379,4 +385,3 @@
     margin-left: 0;
   }
 }
-

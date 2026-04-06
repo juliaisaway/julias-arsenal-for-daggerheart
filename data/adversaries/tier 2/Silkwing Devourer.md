@@ -41,4 +41,4 @@ Spend a Fear and make an attack against a target within Melee range. On a succes
 
 ## Design notes
 
-I love the Silkwing design from the [Incredible Creatures](https://www.drivethrurpg.com/en/product/544239/incredible-creatures-adversaries-for-daggerheart), by Alan Tucker, but I needed more options for an encounter that I was planning. So I tried to follow the same principles and ended with this version of a Solo adversary.
+I love the Silkwing design from the [Incredible Creatures](https://heartofdaggers.com/products/incredible-creatures-adversaries-for-daggerheart/ "Incredible Creatures: Adversaries for Daggerheart, on Heart of Daggers"), by Alan Tucker, but I needed more options for an encounter that I was planning. So I tried to follow the same principles and ended with this version of a Solo adversary.

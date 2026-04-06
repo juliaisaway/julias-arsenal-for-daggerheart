@@ -13,4 +13,4 @@
 ## 2026-04-02
 
 - Websited Launched! Added some of the adversaries, environments and traps that I already used on my table.
-- Feedbacks are welcome on my [GitHub Page](https://github.com/juliaisaway/julias-arsenal-for-daggerheart)
+- Feedbacks are welcome on my [GitHub Page](https://github.com/juliaisaway/julias-arsenal-for-daggerheart "The GitHub repository for this project")

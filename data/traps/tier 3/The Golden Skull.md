@@ -36,4 +36,4 @@ The skull eagerly consumes wealth. If the party offers at least 2 Chests of Gold
 
 ## Design notes
 
-This hazard creates persistent psychological pressure rather than immediate danger. I took this concept from Yaka, an NPC from the [Tomb of Annihilation](https://www.dndbeyond.com/sources/dnd/toa) Campaign, from the *5th Edition*. It's a funny concept to explore.
+This hazard creates persistent psychological pressure rather than immediate danger. I took this concept from Yaka, an NPC from the [Tomb of Annihilation](https://www.dndbeyond.com/sources/dnd/toa "Tomb of Annihilation") Campaign, from the *5th Edition*. It's a funny concept to explore.
