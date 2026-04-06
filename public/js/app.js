@@ -151,18 +151,22 @@ async function loadFileList() {
       return;
     }
 
+    const section = createSidebarSection(formatCategoryLabel(category), category);
     const categoryHeader = document.createElement("h2");
     categoryHeader.className = `category-header ${category}`;
     categoryHeader.textContent = formatCategoryLabel(category);
-    sidebar.appendChild(categoryHeader);
+    section.appendChild(categoryHeader);
 
     Object.keys(categoryEntries)
       .sort(compareTierLabels)
       .forEach((tier) => {
+        const tierGroup = document.createElement("div");
+        tierGroup.className = "tier-group";
+
         const tierHeader = document.createElement("h3");
         tierHeader.className = "tier-header";
         tierHeader.textContent = capitalizeWords(tier);
-        sidebar.appendChild(tierHeader);
+        tierGroup.appendChild(tierHeader);
 
         const ul = document.createElement("ul");
         ul.className = "file-sublist";
@@ -182,8 +186,11 @@ async function loadFileList() {
             ul.appendChild(li);
           });
 
-        sidebar.appendChild(ul);
+        tierGroup.appendChild(ul);
+        section.appendChild(tierGroup);
       });
+
+    sidebar.appendChild(section);
   });
 
   await loadInitialRoute();
@@ -242,10 +249,11 @@ function appendStaticNavigation(sidebar, mechanics) {
 }
 
 function appendNavigationSection(sidebar, title, pages) {
+  const section = createSidebarSection(title, title.toLowerCase());
   const categoryHeader = document.createElement("h2");
   categoryHeader.className = `category-header ${title.toLowerCase()}`;
   categoryHeader.textContent = title;
-  sidebar.appendChild(categoryHeader);
+  section.appendChild(categoryHeader);
 
   const ul = document.createElement("ul");
   ul.className = "file-sublist static-pages";
@@ -264,7 +272,15 @@ function appendNavigationSection(sidebar, title, pages) {
     ul.appendChild(li);
   });
 
-  sidebar.appendChild(ul);
+  section.appendChild(ul);
+  sidebar.appendChild(section);
+}
+
+function createSidebarSection(title, className) {
+  const section = document.createElement("section");
+  section.className = `sidebar-section ${className}`;
+  section.setAttribute("aria-label", title);
+  return section;
 }
 
 function clearSidebarSelection() {

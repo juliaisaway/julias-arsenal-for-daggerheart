@@ -191,6 +191,15 @@ body {
     }
   }
 
+  .sidebar-section {
+    display: grid;
+    gap: #{functions.rem(4)};
+
+    & + .sidebar-section {
+      margin-top: #{functions.rem(8)};
+    }
+  }
+
   h2.category-header {
     font-weight: 500;
     font-size: #{functions.rem(16)};
@@ -228,6 +237,11 @@ body {
     &.traps::before {
       background: var(--trap-border-color);
     }
+  }
+
+  .tier-group {
+    display: grid;
+    gap: #{functions.rem(2)};
   }
 
   h3.tier-header {
