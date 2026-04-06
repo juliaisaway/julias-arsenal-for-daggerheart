@@ -161,6 +161,31 @@
     margin: 8px 0;
   }
 
+  table {
+    width: 100%;
+    margin: 8px 0 16px;
+    border-collapse: collapse;
+    border: 1px solid var(--content-table-border);
+    font-size: #{functions.rem(16)};
+
+    @media (max-width: #{functions.rem(896)}) {
+      font-size: #{functions.rem(15.2)};
+    }
+  }
+
+  th,
+  td {
+    padding: var(--block-padding);
+    border: 1px solid var(--content-table-border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--content-table-header-bg);
+    font-weight: 700;
+  }
+
   a {
     color: var(--text-dark);
     font-weight: 500;
@@ -169,6 +194,63 @@
       text-decoration-style: dotted;
       font-weight: 400;
     }
+  }
+
+  hr {
+    border: none;
+    border-top: 1px dotted;
+    margin: 16px 0;
+  }
+}
+
+%border-cut {
+  --cut-size: 6px;
+  position: relative;
+  isolation: isolate;
+  border: none;
+  background: transparent;
+
+  @media (max-width: #{functions.rem(640)}) {
+    --cut-size: #{functions.rem(6)};
+  }
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  &::before {
+    background: var(--card-border-cut-color);
+    clip-path: polygon(
+      0 var(--cut-size),
+      var(--cut-size) 0,
+      calc(100% - var(--cut-size)) 0,
+      100% var(--cut-size),
+      100% calc(100% - var(--cut-size)),
+      calc(100% - var(--cut-size)) 100%,
+      var(--cut-size) 100%,
+      0 calc(100% - var(--cut-size))
+    );
+    z-index: -2;
+  }
+
+  &::after {
+    inset: 1px;
+    background: var(--card-border-cut-bg);
+    clip-path: polygon(
+      0 calc(var(--cut-size) - 1px),
+      calc(var(--cut-size) - 1px) 0,
+      calc(100% - (var(--cut-size) - 1px)) 0,
+      100% calc(var(--cut-size) - 1px),
+      100% calc(100% - (var(--cut-size) - 1px)),
+      calc(100% - (var(--cut-size) - 1px)) 100%,
+      calc(var(--cut-size) - 1px) 100%,
+      0 calc(100% - (var(--cut-size) - 1px))
+    );
+    z-index: -1;
   }
 }
 
@@ -209,6 +291,7 @@
 }
 
 .adversary-card,
+.ally-card,
 .environment-card,
 .trap-card,
 .mechanic-card,
@@ -217,55 +300,10 @@
 }
 
 .adversary-card {
-  --cut-size: 6px;
   --card-link-color: color-mix(in srgb, var(--adv-border-color) 60%, black);
-  position: relative;
-  isolation: isolate;
-  border: none;
-  background: transparent;
-
-  @media (max-width: #{functions.rem(640)}) {
-    --cut-size: #{functions.rem(6)};
-  }
-
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  &::before {
-    background: var(--adv-border-color);
-    clip-path: polygon(
-      0 var(--cut-size),
-      var(--cut-size) 0,
-      calc(100% - var(--cut-size)) 0,
-      100% var(--cut-size),
-      100% calc(100% - var(--cut-size)),
-      calc(100% - var(--cut-size)) 100%,
-      var(--cut-size) 100%,
-      0 calc(100% - var(--cut-size))
-    );
-    z-index: -2;
-  }
-
-  &::after {
-    inset: 1px;
-    background: var(--adv-card-bg);
-    clip-path: polygon(
-      0 calc(var(--cut-size) - 1px),
-      calc(var(--cut-size) - 1px) 0,
-      calc(100% - (var(--cut-size) - 1px)) 0,
-      100% calc(var(--cut-size) - 1px),
-      100% calc(100% - (var(--cut-size) - 1px)),
-      calc(100% - (var(--cut-size) - 1px)) 100%,
-      calc(var(--cut-size) - 1px) 100%,
-      0 calc(100% - (var(--cut-size) - 1px))
-    );
-    z-index: -1;
-  }
+  --card-border-cut-color: var(--adv-border-color);
+  --card-border-cut-bg: var(--adv-card-bg);
+  @extend %border-cut;
 
   .block-table {
     border-top: 1px solid var(--adv-border-color);
@@ -273,6 +311,22 @@
 
     hr {
       border-color: var(--adv-border-color);
+    }
+  }
+}
+
+.ally-card {
+  --card-link-color: color-mix(in srgb, var(--ally-border-color) 60%, black);
+  --card-border-cut-color: var(--ally-border-color);
+  --card-border-cut-bg: var(--ally-card-bg);
+  @extend %border-cut;
+
+  .block-table {
+    border-top: 1px solid var(--ally-border-color);
+    border-bottom: 1px solid var(--ally-border-color);
+
+    hr {
+      border-color: var(--ally-border-color);
     }
   }
 }
@@ -367,6 +421,13 @@
       height: 16px;
       background: var(--highlight-color);
     }
+  }
+
+  h4 {
+    color: var(--mechanic-subheading-color);
+    font-weight: 600;
+    font-size: #{functions.rem(18)};
+    text-transform: none;
   }
 
   p:first-of-type {

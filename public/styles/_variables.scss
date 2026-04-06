@@ -23,8 +23,11 @@
   --mechanic-card-bg: #fbf4ed;
   --mechanic-border-color: #d89e77;
   --mechanic-heading-color: #b7561c;
-  --welcome-card-bg: #eef1f6;
-  --welcome-border-color: #8797b0;
+  --mechanic-subheading-color: #977c31;
+  --welcome-card-bg: #f2e5f6;
+  --welcome-border-color: #b28abe;
+  --ally-card-bg: #eef1f6;
+  --ally-border-color: #8797b0;
   --design-notes-bg: #f6e3e1;
   --design-notes-border: #b85f5f;
   --footer-bg: rgba(229, 226, 221, 1);
@@ -32,6 +35,12 @@
   --footer-link-color: #763c88;
   --footer-border: color-mix(in srgb, rgba(229, 226, 221, 1) 90%, black);
   --block-table-bg: #ffffff;
+  --content-table-border: color-mix(in srgb, var(--text-dark) 18%, white);
+  --content-table-header-bg: color-mix(
+    in srgb,
+    var(--block-table-bg) 65%,
+    var(--welcome-card-bg)
+  );
   --text-dark: #191919;
   --text-light: #3a3a3a;
   --file-li-selected-bg: var(--primary-color);

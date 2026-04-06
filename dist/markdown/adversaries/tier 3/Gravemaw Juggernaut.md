@@ -19,4 +19,4 @@ A massive, animate boulder with a crude, grinning face. It hurls itself across t
 
 **Unstable Core - Passive:** When the Juggernaut marks its last Stress, it explodes and is defeated. Each creature within Close range must make an Agility Reaction Roll (16) or take 2d10 physical damage.
 
-> **Design notes:** When I played *Clair Obscur: Expedition 33*, I encounter a boss called *Grosse Tete* with a unique and fun mechanic, so I tried to replicate here.
+> **Design notes:** When I played [_Clair Obscur: Expedition 33_](https://www.expedition33.com/ "Clair Obscur: Expedition 33"), I encounter a boss called [_Grosse Tete_](https://expedition33.wiki.fextralife.com/Grosse+Tete "Grosse Tete") with a unique and fun mechanic, so I tried to replicate here.

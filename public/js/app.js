@@ -6,10 +6,18 @@ let organizedContent = {
   adversaries: {},
   environments: {},
   traps: {},
+  allies: {},
 };
 const filePathToRoute = new Map();
 const routeToFilePath = new Map();
-const CATEGORY_ORDER = ["adversaries", "environments", "traps"];
+const CATEGORY_CONFIG = {
+  adversaries: { groupedByTier: true },
+  environments: { groupedByTier: true },
+  traps: { groupedByTier: true },
+  allies: { groupedByTier: false },
+};
+const CATEGORY_ORDER = ["adversaries", "allies", "environments", "traps"];
+const MECHANIC_DATA_PAGE_SLUGS = new Set(["conditions"]);
 const STATIC_PAGE_HOME = "/";
 const STATIC_PAGE_CHANGELOG = "/changelog/";
 const STATIC_PAGE_FILES = {
@@ -90,14 +98,45 @@ function normalizeAppRoute(route) {
   return withLeadingSlash.replace(/\/+$/g, "") || "/";
 }
 
-function getDataFileRoute(filePath) {
-  const [category, tier, fileName] = String(filePath).split("/");
+function parseContentFilePath(filePath) {
+  const parts = String(filePath).split("/").filter(Boolean);
+  const [category, ...rest] = parts;
 
-  if (!category || !tier || !fileName) {
+  if (!category || rest.length === 0 || !CATEGORY_CONFIG[category]) {
+    return null;
+  }
+
+  if (CATEGORY_CONFIG[category].groupedByTier) {
+    const [group, fileName] = rest;
+
+    if (!group || !fileName) {
+      return null;
+    }
+
+    return { category, group, fileName };
+  }
+
+  const [fileName] = rest;
+
+  if (!fileName) {
+    return null;
+  }
+
+  return { category, group: "", fileName };
+}
+
+function getDataFileRoute(filePath) {
+  const parsedPath = parseContentFilePath(filePath);
+
+  if (!parsedPath) {
     return STATIC_PAGE_HOME;
   }
 
-  return `/${slugifySegment(category)}/${slugifySegment(tier)}/${slugifySegment(stripMarkdownExtension(fileName))}/`;
+  if (!parsedPath.group) {
+    return `/${slugifySegment(parsedPath.category)}/${slugifySegment(stripMarkdownExtension(parsedPath.fileName))}/`;
+  }
+
+  return `/${slugifySegment(parsedPath.category)}/${slugifySegment(parsedPath.group)}/${slugifySegment(stripMarkdownExtension(parsedPath.fileName))}/`;
 }
 
 function getCategoryLandingRoute(category) {
@@ -133,26 +172,27 @@ function buildOrganizedContent() {
     adversaries: {},
     environments: {},
     traps: {},
+    allies: {},
   };
 
   dataFiles.forEach((file) => {
-    const parts = file.split("/");
+    const parsedPath = parseContentFilePath(file);
 
-    if (parts.length < 3) {
+    if (!parsedPath) {
       return;
     }
 
-    const [category, tier, fileName] = parts;
+    const { category, group, fileName } = parsedPath;
 
     if (!organizedContent[category]) {
       return;
     }
 
-    if (!organizedContent[category][tier]) {
-      organizedContent[category][tier] = [];
+    if (!organizedContent[category][group]) {
+      organizedContent[category][group] = [];
     }
 
-    organizedContent[category][tier].push({
+    organizedContent[category][group].push({
       name: fileName.replace(/\.md$/i, ""),
       path: file,
       route: filePathToRoute.get(file),
@@ -170,14 +210,14 @@ function getCategoryEntries(category) {
 
 function getFirstCategoryFile(category) {
   const entries = getCategoryEntries(category);
-  const tiers = Object.keys(entries).sort(compareTierLabels);
-  const firstTier = tiers[0];
+  const groups = getSortedCategoryGroups(category);
+  const firstGroup = groups[0];
 
-  if (!firstTier) {
+  if (firstGroup === undefined) {
     return null;
   }
 
-  const files = [...entries[firstTier]].sort((left, right) =>
+  const files = [...entries[firstGroup]].sort((left, right) =>
     left.name.localeCompare(right.name),
   );
 
@@ -188,6 +228,16 @@ function hasDetailSidebarContent(category) {
   return Boolean(
     category && Object.keys(getCategoryEntries(category)).length > 0,
   );
+}
+
+function getSortedCategoryGroups(category) {
+  const groups = Object.keys(getCategoryEntries(category));
+
+  if (!CATEGORY_CONFIG[category]?.groupedByTier) {
+    return groups.sort((left, right) => left.localeCompare(right));
+  }
+
+  return groups.sort(compareTierLabels);
 }
 
 function pushBrowserRoute(route) {
@@ -357,6 +407,12 @@ async function selectFile(file, link, options = {}) {
     return;
   }
 
+  if (file.includes("allies/")) {
+    content.innerHTML = renderAllyCard(md);
+    syncFeatherIcons();
+    return;
+  }
+
   content.innerHTML = demoteHtmlHeadings(withExternalTargets(marked.parse(md)));
   syncFeatherIcons();
 }
@@ -370,7 +426,7 @@ function appendStaticNavigation(sidebar, mechanics) {
   if (mechanics.length > 0) {
     appendNavigationSection(
       sidebar,
-      "Mechanics",
+      "Rules & Mechanics",
       mechanics.map((page) => ({
         label: page.title,
         route: getMechanicRoute(page.slug),
@@ -486,43 +542,43 @@ function renderDetailSidebar(category, activeFilePath) {
   categoryHeader.textContent = formatCategoryLabel(category);
   section.appendChild(categoryHeader);
 
-  Object.keys(getCategoryEntries(category))
-    .sort(compareTierLabels)
-    .forEach((tier) => {
-      const tierGroup = document.createElement("div");
-      tierGroup.className = "tier-group";
+  getSortedCategoryGroups(category).forEach((group) => {
+    const tierGroup = document.createElement("div");
+    tierGroup.className = "tier-group";
 
+    if (group) {
       const tierHeader = document.createElement("h3");
       tierHeader.className = "tier-header";
-      tierHeader.textContent = capitalizeWords(tier);
+      tierHeader.textContent = capitalizeWords(group);
       tierGroup.appendChild(tierHeader);
+    }
 
-      const ul = document.createElement("ul");
-      ul.className = "file-sublist";
+    const ul = document.createElement("ul");
+    ul.className = "file-sublist";
 
-      [...getCategoryEntries(category)[tier]]
-        .sort((left, right) => left.name.localeCompare(right.name))
-        .forEach((file) => {
-          const li = document.createElement("li");
-          const link = document.createElement("a");
-          link.href = file.route;
-          link.textContent = file.name;
-          link.dataset.route = file.route;
-          if (file.path === activeFilePath) {
-            link.classList.add("selected");
-            link.setAttribute("aria-current", "page");
-          }
-          link.addEventListener("click", (event) => {
-            event.preventDefault();
-            selectFile(file.path, link, { history: "push" });
-          });
-          li.appendChild(link);
-          ul.appendChild(li);
+    [...getCategoryEntries(category)[group]]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .forEach((file) => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = file.route;
+        link.textContent = file.name;
+        link.dataset.route = file.route;
+        if (file.path === activeFilePath) {
+          link.classList.add("selected");
+          link.setAttribute("aria-current", "page");
+        }
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          selectFile(file.path, link, { history: "push" });
         });
+        li.appendChild(link);
+        ul.appendChild(li);
+      });
 
-      tierGroup.appendChild(ul);
-      section.appendChild(tierGroup);
-    });
+    tierGroup.appendChild(ul);
+    section.appendChild(tierGroup);
+  });
 
   detailSidebar.appendChild(section);
   syncFeatherIcons();
@@ -684,9 +740,13 @@ async function renderMechanicPage(route) {
 
   const introMarkdown = await introResponse.text();
   const { body: introBody } = parseFrontmatter(introMarkdown);
-  const matchingDataFiles = dataFiles
-    .filter((file) => file.startsWith(`${page.slug}/`) && file.endsWith(".md"))
-    .sort((left, right) => left.localeCompare(right));
+  const matchingDataFiles = MECHANIC_DATA_PAGE_SLUGS.has(page.slug)
+    ? dataFiles
+        .filter(
+          (file) => file.startsWith(`${page.slug}/`) && file.endsWith(".md"),
+        )
+        .sort((left, right) => left.localeCompare(right))
+    : [];
 
   const mechanicEntries = await Promise.all(
     matchingDataFiles.map(async (file) => {
@@ -870,6 +930,37 @@ function renderTrapCard(md) {
         ${blockTable}
         <h3>Features</h3>
         <div class="feature-copy">${withExternalTargets(features || "<p>No features listed.</p>")}</div>
+      </div>
+      ${renderDesignNotes(designNotes)}
+    </div>
+  `;
+}
+
+function renderAllyCard(md) {
+  const { meta, body } = parseFrontmatter(md);
+  const title = matchOrEmpty(body, /^# (.+)$/m) || meta.name || "";
+  const summary = extractSummary(body);
+  const features = extractSection(body, /## Features/i);
+  const designNotes = extractSection(body, /## Design notes/i);
+  const processedFeatures = renderStandardFeatureMarkup(features);
+  const blockTable = `
+    <div class="block-table">
+      <div class="block-content">
+        <strong>Ancestry:</strong> ${formatAllyMetaValue(meta.ancestry)}
+        &nbsp;|&nbsp;<strong>Community:</strong> ${capitalizeWords(meta.community || "-")}
+        &nbsp;|&nbsp;<strong>Role:</strong> ${formatAllyMetaValue(meta.role)}
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="card-stack">
+      <div class="ally-card">
+        <h2>${title}</h2>
+        <div class="summary">${parseInlineWithExternalTargets(summary)}</div>
+        ${blockTable}
+        <h3>Features</h3>
+        <div class="feature-copy">${processedFeatures}</div>
       </div>
       ${renderDesignNotes(designNotes)}
     </div>
@@ -1082,6 +1173,27 @@ function renderDesignNotes(designNotes) {
   return `<div class="design-notes"><strong>Design notes:</strong> ${parseInlineWithExternalTargets(designNotes)}</div>`;
 }
 
+function renderStandardFeatureMarkup(features, options = {}) {
+  const { flavorParagraphs = false } = options;
+  let processedFeatures = features
+    ? features.replace(/### (.+?)\r?\n\r?\n/g, "### $1: ")
+    : "";
+  processedFeatures = processedFeatures.replace(
+    /### (.+?):\s*(.+)/g,
+    "**_$1:_** $2",
+  );
+
+  let rendered = demoteHtmlHeadings(
+    withExternalTargets(marked.parse(processedFeatures || "")),
+  );
+
+  if (flavorParagraphs) {
+    rendered = applyFlavorParagraphs(rendered);
+  }
+
+  return markFeatureLeadParagraphs(rendered);
+}
+
 function applyFlavorParagraphs(html) {
   return html.replace(
     /<p><em>([\s\S]*?)<\/em><\/p>/g,
@@ -1132,6 +1244,27 @@ function formatInlineList(value) {
   return String(value || "")
     .replace(/^\[|\]$/g, "")
     .replace(/,/g, ", ");
+}
+
+function formatAllyMetaValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => capitalizeWords(entry)).join(" / ");
+  }
+
+  if (
+    typeof value === "string" &&
+    value.startsWith("[") &&
+    value.endsWith("]")
+  ) {
+    return value
+      .slice(1, -1)
+      .split(",")
+      .map((entry) => capitalizeWords(entry.trim()))
+      .filter(Boolean)
+      .join(" / ");
+  }
+
+  return capitalizeWords(value || "-");
 }
 
 function formatPotentialAdversaries(potentialAdversaries) {

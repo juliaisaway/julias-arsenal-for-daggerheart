@@ -48,6 +48,7 @@ const requiredAdversaryFields = [
   "damageType",
 ];
 const requiredEnvironmentFields = ["tier", "type", "difficulty", "potentialAdversaries"];
+const requiredAllyFields = ["name", "ancestry", "community", "role"];
 const requiredTrapFields = ["tier", "type", "difficulty"];
 
 if (!existsSync(sourceDir)) {
@@ -85,13 +86,14 @@ for (const filePath of markdownFiles) {
 manifest.sort((left, right) => left.title.localeCompare(right.title));
 
 const adversaryCount = manifest.filter((document) => document.kind === "adversary").length;
+const allyCount = manifest.filter((document) => document.kind === "ally").length;
 const environmentCount = manifest.filter((document) => document.kind === "environment").length;
 const trapCount = manifest.filter((document) => document.kind === "trap").length;
 const conditionCount = manifest.filter((document) => document.kind === "condition").length;
 
 mkdirSync(outputDir, { recursive: true });
 console.log(
-  `Built ${adversaryCount} adversary Markdown file(s), ${environmentCount} environment Markdown file(s), ${trapCount} trap Markdown file(s), and ${conditionCount} condition Markdown file(s) into dist/.`,
+  `Built ${adversaryCount} adversary Markdown file(s), ${allyCount} ally Markdown file(s), ${environmentCount} environment Markdown file(s), ${trapCount} trap Markdown file(s), and ${conditionCount} condition Markdown file(s) into dist/.`,
 );
 
 function buildDocument(source, filePath, relativePath, slug) {
@@ -378,6 +380,10 @@ function detectDocumentKind(frontmatter, filePath) {
     return "condition";
   }
 
+  if (normalizedPath.includes("/data/allies/")) {
+    return "ally";
+  }
+
   if (typeof frontmatter?.role === "string") {
     return "adversary";
   }
@@ -403,6 +409,11 @@ function validateFrontmatter(frontmatter, filePath) {
 
   if (kind === "environment") {
     validateEnvironmentFrontmatter(frontmatter, filePath);
+    return;
+  }
+
+  if (kind === "ally") {
+    validateAllyFrontmatter(frontmatter, filePath);
     return;
   }
 
@@ -509,6 +520,35 @@ function validateEnvironmentFrontmatter(frontmatter, filePath) {
   }
 }
 
+function validateAllyFrontmatter(frontmatter, filePath) {
+  const missingFields = requiredAllyFields.filter((field) => {
+    const value = frontmatter[field];
+    return value === undefined || value === null || value === "";
+  });
+
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required frontmatter field(s) in ${filePath}: ${missingFields.join(", ")}.`);
+  }
+
+  for (const field of requiredAllyFields) {
+    const value = frontmatter[field];
+    const acceptsArray = field === "role" || field === "ancestry";
+    const isValidArray =
+      acceptsArray &&
+      Array.isArray(value) &&
+      value.length > 0 &&
+      value.every((entry) => typeof entry === "string" && entry.trim());
+
+    const isValidString = typeof value === "string" && value.trim();
+
+    if (!isValidString && !isValidArray) {
+      throw new Error(
+        `Invalid ${field} in ${filePath}. Expected a non-empty string, received: ${frontmatter[field]}`,
+      );
+    }
+  }
+}
+
 function validateTrapFrontmatter(frontmatter, filePath) {
   const missingFields = requiredTrapFields.filter((field) => {
     const value = frontmatter[field];
@@ -599,6 +639,10 @@ function renderCompiledMarkdown(document) {
     return renderCompiledTrapMarkdown(document);
   }
 
+  if (document.kind === "ally") {
+    return renderCompiledAllyMarkdown(document);
+  }
+
   if (document.kind === "environment") {
     return renderCompiledEnvironmentMarkdown(document);
   }
@@ -669,6 +713,27 @@ function renderCompiledEnvironmentMarkdown(document) {
     "## Environment Features",
     "",
     ...renderFeatureBlock(sections.features),
+  ];
+
+  appendDesignNotes(output, sections.designNotes);
+
+  return `${output.join("\n").trim()}\n`;
+}
+
+function renderCompiledAllyMarkdown(document) {
+  const sections = extractAllySections(document.body);
+  const output = [
+    `# ${document.title}`,
+    "",
+    sections.description || "No description provided.",
+    "",
+    `> **Ancestry:** ${formatAllyMetaValue(document.frontmatter.ancestry ?? "-")}`,
+    `> **Community:** ${capitalizeWords(document.frontmatter.community ?? "-")}`,
+    `> **Role:** ${formatAllyMetaValue(document.frontmatter.role ?? "-")}`,
+    "",
+    "## Features",
+    "",
+    ...renderFeatures(sections.features),
   ];
 
   appendDesignNotes(output, sections.designNotes);
@@ -805,6 +870,48 @@ function extractEnvironmentSections(body) {
   };
 }
 
+function extractAllySections(body) {
+  const lines = body.split("\n");
+  const titleIndex = lines.findIndex((line) => /^#\s+/.test(line));
+  const descriptionLines = [];
+  const featureLines = [];
+  const designNotesLines = [];
+  let currentSection = "description";
+
+  for (const rawLine of lines.slice(titleIndex + 1)) {
+    const line = rawLine.trimEnd();
+
+    if (/^##\s+Features/i.test(line)) {
+      currentSection = "features";
+      continue;
+    }
+
+    if (/^##\s+Design\s+notes/i.test(line)) {
+      currentSection = "designNotes";
+      continue;
+    }
+
+    if (/^##\s+/.test(line)) {
+      currentSection = "other";
+      continue;
+    }
+
+    if (currentSection === "description") {
+      descriptionLines.push(line);
+    } else if (currentSection === "features") {
+      featureLines.push(line);
+    } else if (currentSection === "designNotes") {
+      designNotesLines.push(line);
+    }
+  }
+
+  return {
+    description: collapseParagraph(descriptionLines),
+    features: featureLines,
+    designNotes: collapseParagraph(designNotesLines),
+  };
+}
+
 function extractTrapSections(body) {
   const lines = body.split("\n");
   const titleIndex = lines.findIndex((line) => /^#\s+/.test(line));
@@ -867,6 +974,22 @@ function appendDesignNotes(output, designNotes) {
 
   output.push("");
   output.push(`> **Design notes:** ${designNotes}`);
+}
+
+function capitalizeWords(value) {
+  return String(value)
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatAllyMetaValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => capitalizeWords(entry)).join(" / ");
+  }
+
+  return capitalizeWords(value);
 }
 
 function renderFeatureBlock(lines) {
@@ -1114,4 +1237,8 @@ function extractMarkdownTitle(source, filePath) {
 
   return titleMatch[1].trim();
 }
+
+
+
+
 

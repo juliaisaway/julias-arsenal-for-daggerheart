@@ -2,6 +2,7 @@
 
 ## 2026-04-06
 
+- Added a new mechanic: [Allies](http://localhost:3000/allies/ "Allies"). You can check all the 27 allies or the rules of how to use them.
 - Added the [Gravemaw Juggernaut](/adversaries/tier-3/gravemaw-juggernaut/) Adversary at Tier 3.
 - Added a routing system for easy navigation.
 
