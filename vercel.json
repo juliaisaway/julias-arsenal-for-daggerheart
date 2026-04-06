@@ -2,7 +2,23 @@
   "buildCommand": "npm run build",
   "rewrites": [
     {
-      "source": "/((?!api/|content/|mechanics/|styles/|js/).*)",
+      "source": "/adversaries/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/environments/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/traps/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/mechanics/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/changelog/:path*",
       "destination": "/"
     }
   ]
