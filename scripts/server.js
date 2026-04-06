@@ -12,8 +12,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, "../data");
 const MECHANICS_DIR = path.join(__dirname, "../public/mechanics");
+const PUBLIC_DIR = path.join(__dirname, "../public");
 
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(PUBLIC_DIR));
 
 function slugifySegment(value) {
   return String(value)
@@ -67,6 +68,10 @@ app.get("/api/file", (req, res) => {
 
     res.send(data);
   });
+});
+
+app.get(/^(?!\/api(?:\/|$)).*/, (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
 app.listen(PORT, () => {

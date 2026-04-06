@@ -1,18 +1,29 @@
 let isMobileMenuOpen = false;
 let dataFiles = [];
 let mechanicPages = [];
-const STATIC_PAGE_HOME = "home";
-const STATIC_PAGE_CHANGELOG = "changelog";
+const filePathToRoute = new Map();
+const routeToFilePath = new Map();
+const STATIC_PAGE_HOME = "/";
+const STATIC_PAGE_CHANGELOG = "/changelog/";
 const STATIC_PAGE_FILES = {
   [STATIC_PAGE_HOME]: "/content/index.md",
   [STATIC_PAGE_CHANGELOG]: "/content/changelog.md",
 };
 
 function withExternalTargets(html) {
-  return html.replace(
-    /<a\b(?![^>]*\btarget=)([^>]*)>/gi,
-    '<a$1 target="_blank" rel="noopener noreferrer">',
-  );
+  return html.replace(/<a\b([^>]*)>/gi, (match, attributes) => {
+    if (/\btarget=/i.test(attributes)) {
+      return match;
+    }
+
+    const hrefMatch = attributes.match(/\bhref=(["'])(.*?)\1/i);
+
+    if (!hrefMatch || !isExternalHref(hrefMatch[2])) {
+      return match;
+    }
+
+    return `<a${attributes} target="_blank" rel="noopener noreferrer">`;
+  });
 }
 
 function demoteHtmlHeadings(html) {
@@ -27,6 +38,91 @@ function demoteHtmlHeadings(html) {
 
 function parseInlineWithExternalTargets(markdown) {
   return withExternalTargets(marked.parseInline(markdown || ""));
+}
+
+function parseInline(markdown) {
+  return marked.parseInline(markdown || "");
+}
+
+function isExternalHref(href) {
+  if (/^(mailto|tel):/i.test(href)) {
+    return true;
+  }
+
+  if (/^(https?:)?\/\//i.test(href)) {
+    try {
+      const url = new URL(href, window.location.origin);
+      return url.origin !== window.location.origin;
+    } catch (error) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function slugifySegment(value) {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function normalizeAppRoute(route) {
+  const value = String(route || "/")
+    .split(/[?#]/)[0]
+    .replace(/\/{2,}/g, "/");
+
+  if (!value || value === "/") {
+    return "/";
+  }
+
+  const withLeadingSlash = value.startsWith("/") ? value : `/${value}`;
+  return withLeadingSlash.replace(/\/+$/g, "") || "/";
+}
+
+function getDataFileRoute(filePath) {
+  const [category, tier, fileName] = String(filePath).split("/");
+
+  if (!category || !tier || !fileName) {
+    return STATIC_PAGE_HOME;
+  }
+
+  return `/${slugifySegment(category)}/${slugifySegment(tier)}/${slugifySegment(stripMarkdownExtension(fileName))}/`;
+}
+
+function getCanonicalRoute(route) {
+  if (route === STATIC_PAGE_HOME) {
+    return STATIC_PAGE_HOME;
+  }
+
+  return `${normalizeAppRoute(route)}/`;
+}
+
+function updateRouteMaps() {
+  filePathToRoute.clear();
+  routeToFilePath.clear();
+
+  dataFiles.forEach((file) => {
+    const route = getDataFileRoute(file);
+    filePathToRoute.set(file, route);
+    routeToFilePath.set(normalizeAppRoute(route), file);
+  });
+
+  mechanicPages = mechanicPages.map((page) => ({
+    ...page,
+    route: getMechanicRoute(page.slug),
+  }));
+}
+
+function pushBrowserRoute(route) {
+  window.history.pushState(null, "", getCanonicalRoute(route));
+}
+
+function replaceBrowserRoute(route) {
+  window.history.replaceState(null, "", getCanonicalRoute(route));
 }
 
 function setMenuIcon(name) {
@@ -109,6 +205,8 @@ async function loadFileList() {
     return;
   }
 
+  updateRouteMaps();
+
   const sidebar = document.getElementById("sidebar");
   const mainTitle = sidebar.querySelector("h1");
   sidebar.innerHTML = "";
@@ -141,6 +239,7 @@ async function loadFileList() {
     organized[category][tier].push({
       name: fileName.replace(/\.md$/i, ""),
       path: file,
+      route: filePathToRoute.get(file),
     });
   });
 
@@ -176,11 +275,12 @@ async function loadFileList() {
           .forEach((file) => {
             const li = document.createElement("li");
             const link = document.createElement("a");
-            link.href = `#${encodeURIComponent(file.path)}`;
+            link.href = file.route;
             link.textContent = file.name;
+            link.dataset.route = file.route;
             link.addEventListener("click", (event) => {
               event.preventDefault();
-              selectFile(file.path, link);
+              selectFile(file.path, link, { history: "push" });
             });
             li.appendChild(link);
             ul.appendChild(li);
@@ -196,12 +296,21 @@ async function loadFileList() {
   await loadInitialRoute();
 }
 
-async function selectFile(file, link) {
+async function selectFile(file, link, options = {}) {
+  const { history = "replace" } = options;
   clearSidebarSelection();
 
-  link.classList.add("selected");
-  link.setAttribute("aria-current", "page");
-  window.history.replaceState(null, "", `#${encodeURIComponent(file)}`);
+  if (link) {
+    link.classList.add("selected");
+    link.setAttribute("aria-current", "page");
+  }
+
+  if (history === "push") {
+    pushBrowserRoute(filePathToRoute.get(file));
+  } else if (history === "replace") {
+    replaceBrowserRoute(filePathToRoute.get(file));
+  }
+
   closeMobileMenuIfNeeded();
 
   const res = await fetch(`/api/file?path=${encodeURIComponent(file)}`);
@@ -261,12 +370,13 @@ function appendNavigationSection(sidebar, title, pages) {
   pages.forEach((page) => {
     const li = document.createElement("li");
     const link = document.createElement("a");
-    link.href = `#${page.route}`;
+    link.href = page.route;
     link.textContent = page.label;
     link.dataset.page = page.route;
+    link.dataset.route = page.route;
     link.addEventListener("click", (event) => {
       event.preventDefault();
-      selectStaticPage(page.route, link);
+      selectStaticPage(page.route, link, { history: "push" });
     });
     li.appendChild(link);
     ul.appendChild(li);
@@ -290,7 +400,8 @@ function clearSidebarSelection() {
   });
 }
 
-function selectStaticPage(page, link) {
+function selectStaticPage(page, link, options = {}) {
+  const { history = "replace" } = options;
   clearSidebarSelection();
 
   if (page !== STATIC_PAGE_HOME && link) {
@@ -298,39 +409,49 @@ function selectStaticPage(page, link) {
     link.setAttribute("aria-current", "page");
   }
 
-  window.history.replaceState(null, "", `#${page}`);
+  if (history === "push") {
+    pushBrowserRoute(page);
+  } else if (history === "replace") {
+    replaceBrowserRoute(page);
+  }
+
   closeMobileMenuIfNeeded();
   renderStaticPage(page);
 }
 
 async function loadInitialRoute() {
-  const route = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+  const resolvedRoute = resolveCurrentRoute();
 
-  if (!route || route === STATIC_PAGE_HOME) {
-    selectStaticPage(STATIC_PAGE_HOME);
+  if (!resolvedRoute) {
+    selectStaticPage(STATIC_PAGE_HOME, null, { history: "replace" });
     return;
   }
 
-  if (route === STATIC_PAGE_CHANGELOG || isMechanicRoute(route)) {
-    const pageLink = document.querySelector(`#sidebar a[data-page="${route}"]`);
-    selectStaticPage(route, pageLink);
+  if (resolvedRoute.redirect) {
+    replaceBrowserRoute(resolvedRoute.route);
+  }
+
+  if (resolvedRoute.kind === "static") {
+    const pageLink = document.querySelector(
+      `#sidebar a[data-route="${resolvedRoute.route}"]`,
+    );
+    selectStaticPage(resolvedRoute.route, pageLink, { history: "none" });
     return;
   }
 
-  const fileLink = Array.from(
-    document.querySelectorAll(".file-sublist a"),
-  ).find(
+  const fileLink = Array.from(document.querySelectorAll(".file-sublist a")).find(
     (link) =>
       !link.dataset.page &&
-      decodeURIComponent(link.getAttribute("href").slice(1)) === route,
+      normalizeAppRoute(link.dataset.route || link.getAttribute("href")) ===
+        normalizeAppRoute(resolvedRoute.route),
   );
 
   if (fileLink) {
-    await selectFile(route, fileLink);
+    await selectFile(resolvedRoute.file, fileLink, { history: "none" });
     return;
   }
 
-  selectStaticPage(STATIC_PAGE_HOME);
+  selectStaticPage(STATIC_PAGE_HOME, null, { history: "replace" });
 }
 
 async function renderStaticPage(page) {
@@ -376,7 +497,9 @@ async function renderStaticPage(page) {
 }
 
 async function renderMechanicPage(route) {
-  const page = mechanicPages.find((entry) => getMechanicRoute(entry.slug) === route);
+  const page = mechanicPages.find(
+    (entry) => normalizeAppRoute(entry.route) === normalizeAppRoute(route),
+  );
 
   if (!page) {
     return renderStaticMarkdown("# Page not found");
@@ -855,7 +978,7 @@ function formatPotentialAdversaries(potentialAdversaries) {
   for (const line of lines) {
     if (line.startsWith("- group:")) {
       if (currentGroup) {
-        groups.push(`${currentGroup} (${currentEntries.join(", ")})`);
+        groups.push(formatPotentialAdversaryGroup(currentGroup, currentEntries));
       }
 
       currentGroup = line.replace("- group:", "").trim();
@@ -880,10 +1003,16 @@ function formatPotentialAdversaries(potentialAdversaries) {
   }
 
   if (currentGroup) {
-    groups.push(`${currentGroup} (${currentEntries.join(", ")})`);
+    groups.push(formatPotentialAdversaryGroup(currentGroup, currentEntries));
   }
 
-  return groups.join(", ");
+  return groups
+    .map((group) => parseInline(group))
+    .join(", ");
+}
+
+function formatPotentialAdversaryGroup(group, entries) {
+  return `${group} (${entries.join(", ")})`;
 }
 
 function extractMarkdownHeading(markdown) {
@@ -930,15 +1059,169 @@ function normalizeOrderValue(value) {
 }
 
 function getMechanicRoute(slug) {
-  return `mechanic/${slug}`;
+  return `/mechanics/${slug}/`;
 }
 
 function isMechanicRoute(route) {
-  return route.startsWith("mechanic/");
+  return normalizeAppRoute(route).startsWith("/mechanics/");
+}
+
+function resolveCurrentRoute() {
+  const legacyHashRoute = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+
+  if (legacyHashRoute) {
+    return resolveLegacyHashRoute(legacyHashRoute);
+  }
+
+  return resolveAppRoute(window.location.pathname);
+}
+
+function resolveLegacyHashRoute(route) {
+  if (!route || route === "home") {
+    return {
+      kind: "static",
+      route: STATIC_PAGE_HOME,
+      redirect: true,
+    };
+  }
+
+  if (route === "changelog") {
+    return {
+      kind: "static",
+      route: STATIC_PAGE_CHANGELOG,
+      redirect: true,
+    };
+  }
+
+  if (route.startsWith("mechanic/")) {
+    const slug = route.slice("mechanic/".length);
+    const mechanicRoute = getMechanicRoute(slug);
+
+    return {
+      kind: "static",
+      route: mechanicRoute,
+      redirect: true,
+    };
+  }
+
+  const canonicalRoute = filePathToRoute.get(route);
+
+  if (!canonicalRoute) {
+    return null;
+  }
+
+  return {
+    kind: "file",
+    file: route,
+    route: canonicalRoute,
+    redirect: true,
+  };
+}
+
+function resolveAppRoute(route) {
+  const normalizedRoute = normalizeAppRoute(route);
+
+  if (normalizedRoute === normalizeAppRoute(STATIC_PAGE_HOME)) {
+    return {
+      kind: "static",
+      route: STATIC_PAGE_HOME,
+      redirect: route !== STATIC_PAGE_HOME,
+    };
+  }
+
+  if (normalizedRoute === normalizeAppRoute(STATIC_PAGE_CHANGELOG)) {
+    return {
+      kind: "static",
+      route: STATIC_PAGE_CHANGELOG,
+      redirect: route !== STATIC_PAGE_CHANGELOG,
+    };
+  }
+
+  if (isMechanicRoute(normalizedRoute)) {
+    const page = mechanicPages.find(
+      (entry) => normalizeAppRoute(entry.route) === normalizedRoute,
+    );
+
+    if (!page) {
+      return null;
+    }
+
+    return {
+      kind: "static",
+      route: page.route,
+      redirect: route !== page.route,
+    };
+  }
+
+  const file = routeToFilePath.get(normalizedRoute);
+
+  if (!file) {
+    return null;
+  }
+
+  const canonicalRoute = filePathToRoute.get(file);
+  return {
+    kind: "file",
+    file,
+    route: canonicalRoute,
+    redirect: route !== canonicalRoute,
+  };
+}
+
+function handleDocumentNavigation(event) {
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  ) {
+    return;
+  }
+
+  const link = event.target.closest("a");
+
+  if (!link || link.target === "_blank" || link.hasAttribute("download")) {
+    return;
+  }
+
+  const url = new URL(link.href, window.location.origin);
+
+  if (url.origin !== window.location.origin) {
+    return;
+  }
+
+  const resolvedRoute = url.hash
+    ? resolveLegacyHashRoute(decodeURIComponent(url.hash.replace(/^#/, "")))
+    : resolveAppRoute(url.pathname);
+
+  if (!resolvedRoute) {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (resolvedRoute.kind === "file") {
+    const fileLink = document.querySelector(
+      `#sidebar a[data-route="${resolvedRoute.route}"]`,
+    );
+    selectFile(resolvedRoute.file, fileLink, { history: "push" });
+    return;
+  }
+
+  const pageLink = document.querySelector(
+    `#sidebar a[data-route="${resolvedRoute.route}"]`,
+  );
+  selectStaticPage(resolvedRoute.route, pageLink, { history: "push" });
 }
 
 window.onload = () => {
   initializeMobileMenu();
+  document.addEventListener("click", handleDocumentNavigation);
+  window.addEventListener("popstate", () => {
+    loadInitialRoute();
+  });
   loadFileList();
 };
 
