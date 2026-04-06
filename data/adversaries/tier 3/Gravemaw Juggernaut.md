@@ -40,4 +40,4 @@ When the Juggernaut marks its last Stress, it explodes and is defeated. Each cre
 
 ## Design notes
 
-When I played *Clair Obscur: Expedition 33*, I encounter a boss called *Grosse Tete* with a unique and fun mechanic, so I tried to replicate here.
+When I played [_Clair Obscur: Expedition 33_](https://www.expedition33.com/ "Clair Obscur: Expedition 33"), I encounter a boss called [_Grosse Tete_](https://expedition33.wiki.fextralife.com/Grosse+Tete "Grosse Tete") with a unique and fun mechanic, so I tried to replicate here.

@@ -8,6 +8,7 @@ This file captures repository-specific working agreements for AI coding agents.
 - Do not mix unrelated changes in the same commit.
 - Prefer small, focused commits.
 - Use `npm run deploy` for production deploys.
+- When the user says content "can go up" or "can be published/uploaded", treat that as approval to commit the relevant changes, push them to GitHub, and deploy to Vercel.
 - Do not deploy or push unrelated local changes without making that explicit.
 
 ## Styling Rules

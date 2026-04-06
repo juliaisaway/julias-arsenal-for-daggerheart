@@ -162,8 +162,13 @@
   }
 
   a {
-    color: var(--card-link-color);
+    color: var(--text-dark);
     font-weight: 500;
+
+    &:not([target="_blank"]) {
+      text-decoration-style: dotted;
+      font-weight: 400;
+    }
   }
 }
 

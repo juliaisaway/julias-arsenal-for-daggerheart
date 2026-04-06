@@ -31,15 +31,15 @@ The Arcanist has resistance to magic damage.
 
 Mark a Stress and choose an ally within Far range to create a barrier around them. Until they next take damage, they gain one of the following effects:
 
-- Resistance to physical damage  
-- Resistance to magic damage  
+- Resistance to physical damage
+- Resistance to magic damage
 
 An ally can only benefit from one Arcane Barrier at a time. Applying a new effect removes the previous one.
 
 ### Veil of Silence - Action
 
-Spend a Fear and choose a target within Far range. The target must make a Finesse Reaction Roll (14). On a failure, they are enveloped in arcane silence and cannot cast spells. The effect lasts until the Arcanist takes damage.
+Spend a Fear and choose a target within Far range. The target must make a Finesse Reaction Roll (14). On a failure, they become [_Supressed_](/mechanics/conditions/). The effect lasts until the Arcanist takes damage.
 
 ## Design notes
 
-This adversary was designed as an anti-mage support unit, something that I found it lacks in the Core Book. It supposed to be a coward unit that protects behind other adversaries. My main inspiration was *Hush*, a level 5 Midnight Spell.
+This adversary was designed as an anti-mage support unit, something that I found it lacks in the Core Book. It supposed to be a coward unit that protects behind other adversaries. My main inspiration was _Hush_, a level 5 Midnight Spell.

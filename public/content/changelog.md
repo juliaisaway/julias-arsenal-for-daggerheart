@@ -1,14 +1,19 @@
 # Changelog
 
+## 2026-04-06
+
+- Added the [Gravemaw Juggernaut](/adversaries/tier-3/gravemaw-juggernaut/) Adversary at Tier 3.
+- Added a routing system for easy navigation.
+
 ## 2026-04-04
 
-- Added a **Conditions** page.
+- Added a [Conditions](/mechanics/conditions/ "Conditions") page.
 - Minor tweaks to accessibility and layout inconsistencies.
 
 ## 2026-04-03
 
-- Changed the **Crossbow Trap** to Tier 1.
-- Added the **Literal Bear Trap** on Tier 1.
+- Changed the [Crossbow Trap](/traps/tier-1/crossbow-trap/ "Crossbow Trap") to Tier 1.
+- Added the [Literal Bear Trap](/traps/tier-1/literal-bear-trap/ "Literal Bear Trap") at Tier 1.
 
 ## 2026-04-02
 
