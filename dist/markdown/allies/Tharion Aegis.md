@@ -16,4 +16,4 @@ Adaptable to any situation, he is always one step ahead of the impact.
 
 An ally can only benefit from one of these effects at a time. Applying a new effect removes the previous one.
 
-> **Design notes:** If you want an adversary similar, check [Nullveil Arcanist](/adversaries/nullveil-arcanist/).
+> **Design notes:** If you want a similar adversary , check [Nullveil Arcanist](/adversaries/nullveil-arcanist/).
