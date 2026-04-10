@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-09
+
+- Added a new section: [Ancestries](/ancestries/).
+  - Added [Canin](/ancestries/canin/), [Corvani](/ancestries/corvani/) and [Vestari](/ancestries/vestari/).
+
 ## 2026-04-06
 
 - Added a new mechanic: [Allies](http://localhost:3000/allies/ "Allies"). You can check all the 27 allies or the rules of how to use them.

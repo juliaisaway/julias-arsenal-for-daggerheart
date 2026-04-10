@@ -236,6 +236,9 @@ body {
     &.allies::before {
       background: var(--ally-border-color);
     }
+    &.ancestries::before {
+      background: var(--ancestry-border-color);
+    }
     &.environments::before {
       background: var(--env-border-color);
     }

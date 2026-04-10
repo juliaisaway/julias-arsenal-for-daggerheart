@@ -90,16 +90,17 @@ const allyCount = manifest.filter((document) => document.kind === "ally").length
 const environmentCount = manifest.filter((document) => document.kind === "environment").length;
 const trapCount = manifest.filter((document) => document.kind === "trap").length;
 const conditionCount = manifest.filter((document) => document.kind === "condition").length;
+const ancestryCount = manifest.filter((document) => document.kind === "ancestry").length;
 
 mkdirSync(outputDir, { recursive: true });
 console.log(
-  `Built ${adversaryCount} adversary Markdown file(s), ${allyCount} ally Markdown file(s), ${environmentCount} environment Markdown file(s), ${trapCount} trap Markdown file(s), and ${conditionCount} condition Markdown file(s) into dist/.`,
+  `Built ${adversaryCount} adversary Markdown file(s), ${allyCount} ally Markdown file(s), ${environmentCount} environment Markdown file(s), ${trapCount} trap Markdown file(s), ${conditionCount} condition Markdown file(s), and ${ancestryCount} ancestry Markdown file(s) into dist/.`,
 );
 
 function buildDocument(source, filePath, relativePath, slug) {
   const kind = detectDocumentKind(null, filePath);
 
-  if (kind === "condition") {
+  if (kind === "condition" || kind === "ancestry") {
     return {
       slug,
       source: relativePath.split(sep).join("/"),
@@ -380,6 +381,10 @@ function detectDocumentKind(frontmatter, filePath) {
     return "condition";
   }
 
+  if (normalizedPath.includes("/data/ancestries/")) {
+    return "ancestry";
+  }
+
   if (normalizedPath.includes("/data/allies/")) {
     return "ally";
   }
@@ -635,6 +640,10 @@ function renderCompiledMarkdown(document) {
     return `${document.body.trim()}\n`;
   }
 
+  if (document.kind === "ancestry") {
+    return renderCompiledAncestryMarkdown(document);
+  }
+
   if (document.kind === "trap") {
     return renderCompiledTrapMarkdown(document);
   }
@@ -730,6 +739,23 @@ function renderCompiledAllyMarkdown(document) {
     `> **Ancestry:** ${formatAllyMetaValue(document.frontmatter.ancestry ?? "-")}`,
     `> **Community:** ${capitalizeWords(document.frontmatter.community ?? "-")}`,
     `> **Role:** ${formatAllyMetaValue(document.frontmatter.role ?? "-")}`,
+    "",
+    "## Features",
+    "",
+    ...renderFeatures(sections.features),
+  ];
+
+  appendDesignNotes(output, sections.designNotes);
+
+  return `${output.join("\n").trim()}\n`;
+}
+
+function renderCompiledAncestryMarkdown(document) {
+  const sections = extractAncestrySections(document.body);
+  const output = [
+    `# ${document.title}`,
+    "",
+    sections.description || "No description provided.",
     "",
     "## Features",
     "",
@@ -871,6 +897,48 @@ function extractEnvironmentSections(body) {
 }
 
 function extractAllySections(body) {
+  const lines = body.split("\n");
+  const titleIndex = lines.findIndex((line) => /^#\s+/.test(line));
+  const descriptionLines = [];
+  const featureLines = [];
+  const designNotesLines = [];
+  let currentSection = "description";
+
+  for (const rawLine of lines.slice(titleIndex + 1)) {
+    const line = rawLine.trimEnd();
+
+    if (/^##\s+Features/i.test(line)) {
+      currentSection = "features";
+      continue;
+    }
+
+    if (/^##\s+Design\s+notes/i.test(line)) {
+      currentSection = "designNotes";
+      continue;
+    }
+
+    if (/^##\s+/.test(line)) {
+      currentSection = "other";
+      continue;
+    }
+
+    if (currentSection === "description") {
+      descriptionLines.push(line);
+    } else if (currentSection === "features") {
+      featureLines.push(line);
+    } else if (currentSection === "designNotes") {
+      designNotesLines.push(line);
+    }
+  }
+
+  return {
+    description: collapseParagraph(descriptionLines),
+    features: featureLines,
+    designNotes: collapseParagraph(designNotesLines),
+  };
+}
+
+function extractAncestrySections(body) {
   const lines = body.split("\n");
   const titleIndex = lines.findIndex((line) => /^#\s+/.test(line));
   const descriptionLines = [];
