@@ -1,6 +1,6 @@
 ---
 name: Bernie Kyrellan
-ancestry: canis
+ancestry: canin
 community: wanderborne
 role: [specialist, merchant]
 ---

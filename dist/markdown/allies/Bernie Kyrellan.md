@@ -2,7 +2,7 @@
 
 A merchant always chasing opportunity. He talks fast, smiles often, and disappears at the first sign of danger.
 
-> **Ancestry:** Canis
+> **Ancestry:** Canin
 > **Community:** Wanderborne
 > **Role:** Specialist / Merchant
 
