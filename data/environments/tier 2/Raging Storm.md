@@ -21,7 +21,7 @@ Break the ship apart, separate the crew, drag people into the sea, force impossi
 
 ### Failing Vessel - Passive
 
-The ship is divided into four main sections: The bow, deck, main mast and the stern. Each sector has its own damage threshold and can be individually damaged. If any sector is destroyed, the ship crashes and begins to sink.
+The ship is divided into four main sections: the bow, deck, main mast, and stern. Each sector has its own Difficulty and HP and can be individually damaged. The ship itself shares a single damage threshold.
 
 When a sector becomes heavily damaged, the GM can introduce additional consequences such as flooding, loss of movement, unstable footing, or blocked passageways.
 
