@@ -233,6 +233,9 @@ body {
     &.adversaries::before {
       background: var(--adv-border-color);
     }
+    &.structures::before {
+      background: var(--structure-border-color);
+    }
     &.allies::before {
       background: var(--ally-border-color);
     }

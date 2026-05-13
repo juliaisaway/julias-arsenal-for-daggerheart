@@ -21,30 +21,32 @@ _Has any of the PCs ever faced a storm at sea before? What signs told them the s
 
 ### Crushing Wave - Action
 
-Spend a Fear to have a massive wave crash into the bow, dealing 2d8 damage to that sector and flooding the area. Anyone inside the bow must make an Agility Reaction Roll (16). On a failure, they are swept into another sector and become Vulnerable. On a success, they mark a Stress.
+Spend a Fear to have a massive wave crash into the bow, dealing 2d8 damage to that sector and flooding the area. Anyone inside the bow must make an Agility Reaction Roll (16). On a failure, they are swept into another sector and become Vulnerable.
 
 _What valuables or supplies are being washed across the deck? What does the sea smell like during the storm?_
+
+### Loose Cargo - Action
+
+Spend a Fear to send unsecured cargo crashing across the deck. A PC within the deck sector must make a Strength Reaction Roll (16). On a failure, the deck takes 3d6 damage.
+
+_What cargo was important enough to brave this storm to transport? What breaks apart across the deck?_
+
+### Splintering Mast - Action
+
+Spend a Fear to make the main mast crack violently as the ship veers toward dangerous rocks. A PC within the main mast sector must make an Agility Reaction Roll (16). On a failure, the main mast takes 2d10 damage.
+
+_What sounds echo through the ship as the mast begins to fail? What old repairs or weaknesses become visible?_
+
+### Elemental Surge - Action
+
+Spend a Fear to summon a Minor Water Elemental within the stern if there isn’t already one present. If there is already a Minor Water Elemental within the stern, it immediately takes the spotlight instead.
+
+The Elemental focuses entirely on destroying the stern and pushing the ship off course.
+
+_What shape does the elemental take within the storm? What legends has the crew heard about spirits of the sea?_
 
 ### Man Overboard - Action
 
 Spend a Fear to throw a sailor into the sea. Start a Consequence Countdown (4). When the countdown triggers, every PC marks a Stress and loses a Hope.
 
 _Who among the crew looks most terrified of the storm? What stories do sailors tell about storms like this one?_
-
-### Splintering Mast - Action
-
-Spend a Fear to make the main mast crack violently as the ship veers toward dangerous rocks. A PC within the main mast sector must make an Agility Reaction Roll (16). On a failure, the main mast takes 2d10 damage. On a success, they mark a Stress.
-
-_What sounds echo through the ship as the mast begins to fail? What old repairs or weaknesses become visible?_
-
-### Loose Cargo - Action
-
-Spend a Fear to send unsecured cargo crashing across the deck. A PC within the deck sector must make a Strength Reaction Roll (16). On a failure, they mark a Stress and the deck takes 3d6 damage.
-
-_What cargo was important enough to brave this storm to transport? What breaks apart across the deck?_
-
-### Elemental Surge - Action
-
-Spend a Fear to summon a Minor Water Elemental within the stern. The Elemental focuses entirely on destroying the stern and pushing the ship off course.
-
-_What shape does the elemental take within the storm? What legends has the crew heard about spirits of the sea?_

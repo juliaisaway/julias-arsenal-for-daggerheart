@@ -50,6 +50,8 @@ const requiredAdversaryFields = [
 const requiredEnvironmentFields = ["tier", "type", "difficulty", "potentialAdversaries"];
 const requiredAllyFields = ["name", "ancestry", "community", "role"];
 const requiredTrapFields = ["tier", "type", "difficulty"];
+const requiredStructureFields = ["tier", "type"];
+const requiredStructureSegmentFields = ["difficulty", "healthPoints"];
 
 if (!existsSync(sourceDir)) {
   console.error("Source directory not found:", sourceDir);
@@ -70,14 +72,17 @@ const markdownFiles = collectMarkdownFiles(sourceDir).filter((filePath) => {
 const manifest = [];
 
 for (const filePath of markdownFiles) {
+  if (isStructureSegmentFile(filePath)) {
+    continue;
+  }
+
   const source = readFileSync(filePath, "utf8");
   const relativePath = relative(sourceDir, filePath);
   const slug = buildSlug(relativePath);
-  const outputMarkdownPath = join(outputDir, "markdown", relativePath);
+  const document = buildDocument(source, filePath, relativePath, slug);
+  const outputMarkdownPath = join(outputDir, "markdown", getOutputRelativePath(document, relativePath));
 
   mkdirSync(dirname(outputMarkdownPath), { recursive: true });
-
-  const document = buildDocument(source, filePath, relativePath, slug);
 
   writeFileSync(outputMarkdownPath, renderCompiledMarkdown(document));
   manifest.push(document);
@@ -89,13 +94,14 @@ const adversaryCount = manifest.filter((document) => document.kind === "adversar
 const allyCount = manifest.filter((document) => document.kind === "ally").length;
 const environmentCount = manifest.filter((document) => document.kind === "environment").length;
 const trapCount = manifest.filter((document) => document.kind === "trap").length;
+const structureCount = manifest.filter((document) => document.kind === "structure").length;
 const conditionCount = manifest.filter((document) => document.kind === "condition").length;
 const ancestryCount = manifest.filter((document) => document.kind === "ancestry").length;
 const communityCount = manifest.filter((document) => document.kind === "community").length;
 
 mkdirSync(outputDir, { recursive: true });
 console.log(
-  `Built ${adversaryCount} adversary Markdown file(s), ${allyCount} ally Markdown file(s), ${environmentCount} environment Markdown file(s), ${trapCount} trap Markdown file(s), ${conditionCount} condition Markdown file(s), ${ancestryCount} ancestry Markdown file(s), and ${communityCount} community Markdown file(s) into dist/.`,
+  `Built ${adversaryCount} adversary Markdown file(s), ${allyCount} ally Markdown file(s), ${environmentCount} environment Markdown file(s), ${trapCount} trap Markdown file(s), ${structureCount} structure Markdown file(s), ${conditionCount} condition Markdown file(s), ${ancestryCount} ancestry Markdown file(s), and ${communityCount} community Markdown file(s) into dist/.`,
 );
 
 function buildDocument(source, filePath, relativePath, slug) {
@@ -121,6 +127,7 @@ function buildDocument(source, filePath, relativePath, slug) {
     frontmatter: parsed.frontmatter,
     body: parsed.body.trim(),
     kind: detectDocumentKind(parsed.frontmatter, filePath),
+    segments: buildStructureSegments(filePath),
   };
 }
 
@@ -378,6 +385,10 @@ function detectDocumentKind(frontmatter, filePath) {
     return "trap";
   }
 
+  if (normalizedPath.includes("/data/structures/")) {
+    return "structure";
+  }
+
   if (normalizedPath.includes("/data/conditions/")) {
     return "condition";
   }
@@ -424,6 +435,11 @@ function validateFrontmatter(frontmatter, filePath) {
 
   if (kind === "ally") {
     validateAllyFrontmatter(frontmatter, filePath);
+    return;
+  }
+
+  if (kind === "structure") {
+    validateStructureFrontmatter(frontmatter, filePath);
     return;
   }
 
@@ -581,6 +597,83 @@ function validateTrapFrontmatter(frontmatter, filePath) {
   }
 }
 
+function validateStructureFrontmatter(frontmatter, filePath) {
+  const fileName = filePath.split(sep).pop() ?? "";
+  const isMain = /^Main\.md$/i.test(fileName);
+  const requiredFields = isMain ? requiredStructureFields : requiredStructureSegmentFields;
+  const missingFields = requiredFields.filter((field) => {
+    const value = frontmatter[field];
+    return value === undefined || value === null || value === "";
+  });
+
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required frontmatter field(s) in ${filePath}: ${missingFields.join(", ")}.`);
+  }
+
+  if (frontmatter.tier !== undefined) {
+    validateTier(frontmatter.tier, filePath);
+  }
+
+  if (frontmatter.difficulty !== undefined) {
+    validateNonNegativeNumber(frontmatter.difficulty, "difficulty", filePath);
+  }
+
+  if (
+    frontmatter.healthPoints !== undefined &&
+    !(
+      (typeof frontmatter.healthPoints === "number" && frontmatter.healthPoints >= 0) ||
+      (typeof frontmatter.healthPoints === "string" && frontmatter.healthPoints.trim())
+    )
+  ) {
+    throw new Error(
+      `Invalid healthPoints in ${filePath}. Expected a non-negative number or non-empty text, received: ${frontmatter.healthPoints}`,
+    );
+  }
+
+  if (frontmatter.stress !== undefined) {
+    validateNonNegativeNumber(frontmatter.stress, "stress", filePath);
+  }
+
+  const attackFields = ["attack", "weapon", "range", "damage", "damageType"];
+  const presentAttackFields = attackFields.filter((field) => frontmatter[field] !== undefined && frontmatter[field] !== "");
+
+  if (presentAttackFields.length > 0 && presentAttackFields.length !== attackFields.length) {
+    throw new Error(
+      `Incomplete attack frontmatter in ${filePath}. Provide all of ${attackFields.join(", ")} or omit attack details.`,
+    );
+  }
+
+  if (frontmatter.attack !== undefined && (typeof frontmatter.attack !== "string" || !/^[+-]\d+$/.test(frontmatter.attack))) {
+    throw new Error(
+      `Invalid attack in ${filePath}. Expected a signed integer like +1 or -2, received: ${frontmatter.attack}`,
+    );
+  }
+
+  if (frontmatter.range !== undefined && !allowedRanges.has(frontmatter.range)) {
+    throw new Error(
+      `Invalid range in ${filePath}. Expected one of ${Array.from(allowedRanges).join(", ")}, received: ${frontmatter.range}`,
+    );
+  }
+
+  if (frontmatter.damageType !== undefined && !allowedDamageTypes.has(frontmatter.damageType)) {
+    throw new Error(
+      `Invalid damageType in ${filePath}. Expected "physical" or "magic", received: ${frontmatter.damageType}`,
+    );
+  }
+
+  if (
+    frontmatter.thresholds !== undefined &&
+    (!Array.isArray(frontmatter.thresholds) ||
+      frontmatter.thresholds.length !== 2 ||
+      frontmatter.thresholds.some((value) => typeof value !== "number") ||
+      frontmatter.thresholds[0] >= frontmatter.thresholds[1])
+  ) {
+    throw new Error(
+      `Invalid thresholds in ${filePath}. Expected an array of exactly two numbers where the first is less than the second.`,
+    );
+  }
+}
+
 function validateTier(value, filePath) {
   if (!allowedTiers.has(value)) {
     throw new Error(`Invalid tier in ${filePath}. Expected one of 1, 2, 3, or 4, received: ${value}`);
@@ -636,6 +729,59 @@ function buildSlug(relativePath) {
     .join("/");
 }
 
+function isStructureSegmentFile(filePath) {
+  const normalizedPath = filePath.split(sep).join("/").toLowerCase();
+  return normalizedPath.includes("/data/structures/") && !normalizedPath.endsWith("/main.md");
+}
+
+function getOutputRelativePath(document, relativePath) {
+  if (document.kind !== "structure") {
+    return relativePath;
+  }
+
+  const parts = relativePath.split(sep);
+  const structureName = parts.at(-2);
+  return [...parts.slice(0, -2), `${structureName}.md`].join(sep);
+}
+
+function buildStructureSegments(mainFilePath) {
+  const normalizedPath = mainFilePath.split(sep).join("/").toLowerCase();
+
+  if (!normalizedPath.includes("/data/structures/") || !normalizedPath.endsWith("/main.md")) {
+    return [];
+  }
+
+  return readdirSync(dirname(mainFilePath), { withFileTypes: true })
+    .filter((entry) => entry.isFile() && extname(entry.name).toLowerCase() === ".md" && !/^Main\.md$/i.test(entry.name))
+    .sort((left, right) => compareStructureSegmentNames(left.name, right.name))
+    .map((entry) => {
+      const segmentPath = join(dirname(mainFilePath), entry.name);
+      const segmentSource = readFileSync(segmentPath, "utf8");
+      const parsed = parseMarkdownDocument(segmentSource, segmentPath);
+
+      return {
+        title: parsed.title,
+        frontmatter: parsed.frontmatter,
+        body: parsed.body.trim(),
+      };
+    });
+}
+
+function compareStructureSegmentNames(left, right) {
+  const order = ["Head", "Torso", "Arm", "Leg"];
+  const leftName = left.replace(/\.md$/i, "");
+  const rightName = right.replace(/\.md$/i, "");
+  const leftIndex = order.indexOf(leftName);
+  const rightIndex = order.indexOf(rightName);
+
+  if (leftIndex !== -1 || rightIndex !== -1) {
+    return (leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex) -
+      (rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex);
+  }
+
+  return leftName.localeCompare(rightName);
+}
+
 function normalizeSlugPart(part) {
   return part.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
@@ -655,6 +801,10 @@ function renderCompiledMarkdown(document) {
 
   if (document.kind === "trap") {
     return renderCompiledTrapMarkdown(document);
+  }
+
+  if (document.kind === "structure") {
+    return renderCompiledStructureMarkdown(document);
   }
 
   if (document.kind === "ally") {
@@ -818,6 +968,80 @@ function renderCompiledTrapMarkdown(document) {
   appendDesignNotes(output, sections.designNotes);
 
   return `${output.join("\n").trim()}\n`;
+}
+
+function renderCompiledStructureMarkdown(document) {
+  const sections = extractAdversarySections(document.body);
+  const output = [
+    `# ${document.title}`,
+    "",
+    `## Tier ${document.frontmatter.tier ?? "?"} ${formatRole(document.frontmatter.type ?? "Structure")}`.trim(),
+    "",
+    sections.description || "No description provided.",
+    "",
+    `**Motives & Tactics:** ${sections.motives || "-"}`,
+    "",
+    ...renderStructureMeta(document.frontmatter, true),
+    "",
+    "## Features",
+    "",
+    ...renderFeatures(sections.features),
+  ];
+
+  for (const segment of document.segments ?? []) {
+    const segmentSections = extractAdversarySections(segment.body);
+    output.push("");
+    output.push("---");
+    output.push("");
+    output.push(`## ${segment.title}`);
+    output.push("");
+    output.push(...renderStructureMeta(segment.frontmatter, false));
+    output.push("");
+    output.push("### Features");
+    output.push("");
+    output.push(...renderFeatures(segmentSections.features));
+  }
+
+  appendDesignNotes(output, sections.designNotes);
+
+  return `${output.join("\n").trim()}\n`;
+}
+
+function renderStructureMeta(frontmatter, isMain) {
+  const lines = [];
+
+  if (isMain) {
+    lines.push(`> **Size:** ${frontmatter.size ?? "-"}`);
+    lines.push(`> **Segments:** ${formatSegments(frontmatter.segments) || "-"}`);
+    lines.push(`> **Thresholds:** ${formatThresholds(frontmatter.thresholds)}${frontmatter.stress !== undefined ? ` | **Stress:** ${frontmatter.stress}` : ""}`);
+  } else {
+    const adjacentSegments = formatSegments(frontmatter.adjacentSegments);
+    if (adjacentSegments) {
+      lines.push(`**Adjacent Segments:** ${adjacentSegments}`);
+    }
+
+    const stats = [
+      frontmatter.difficulty !== undefined ? `**Difficulty:** ${frontmatter.difficulty}` : "",
+      frontmatter.healthPoints !== undefined ? `**HP:** ${frontmatter.healthPoints}` : "",
+    ].filter(Boolean);
+
+    if (stats.length > 0) {
+      lines.push(`> ${stats.join(" | ")}`);
+    }
+  }
+
+  if (frontmatter.attack) {
+    lines.push(
+      `> **ATK:** ${frontmatter.attack} | **${frontmatter.weapon ?? "Weapon"}:** ${frontmatter.range ?? "-"} | ${frontmatter.damage ?? "-"} ${formatDamageType(frontmatter.damageType)}`,
+    );
+  }
+
+  const experience = formatExperience(frontmatter.experience);
+  if (experience) {
+    lines.push(`> **Experience:** ${experience}`);
+  }
+
+  return lines.length > 0 ? lines : ["> No stat block details provided."];
 }
 
 function extractAdversarySections(body) {
@@ -1339,6 +1563,22 @@ function formatExperience(value) {
 
   if (Array.isArray(value)) {
     return value.join(", ");
+  }
+
+  return String(value);
+}
+
+function formatSegments(value) {
+  if (!value) {
+    return "";
+  }
+
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+
+  if (value && typeof value === "object" && Array.isArray(value.list)) {
+    return value.list.join(", ");
   }
 
   return String(value);

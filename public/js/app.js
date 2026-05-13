@@ -4,6 +4,7 @@ let dataFiles = [];
 let mechanicPages = [];
 let organizedContent = {
   adversaries: {},
+  structures: {},
   environments: {},
   traps: {},
   allies: {},
@@ -14,13 +15,14 @@ const filePathToRoute = new Map();
 const routeToFilePath = new Map();
 const CATEGORY_CONFIG = {
   adversaries: { groupedByTier: true },
+  structures: { groupedByTier: true },
   environments: { groupedByTier: true },
   traps: { groupedByTier: true },
   allies: { groupedByTier: false },
   ancestries: { groupedByTier: false },
   communities: { groupedByTier: false },
 };
-const CATEGORY_ORDER = ["adversaries", "allies", "ancestries", "communities", "environments", "traps"];
+const CATEGORY_ORDER = ["adversaries", "structures", "allies", "ancestries", "communities", "environments", "traps"];
 const MECHANIC_DATA_PAGE_SLUGS = new Set(["conditions"]);
 const STATIC_PAGE_HOME = "/";
 const STATIC_PAGE_CHANGELOG = "/changelog/";
@@ -111,6 +113,16 @@ function parseContentFilePath(filePath) {
   }
 
   if (CATEGORY_CONFIG[category].groupedByTier) {
+    if (category === "structures") {
+      const [group, structureName, fileName] = rest;
+
+      if (!group || !structureName || !/^Main\.md$/i.test(fileName || "")) {
+        return null;
+      }
+
+      return { category, group, fileName: structureName, sourceFileName: fileName };
+    }
+
     const [group, fileName] = rest;
 
     if (!group || !fileName) {
@@ -160,6 +172,10 @@ function updateRouteMaps() {
   routeToFilePath.clear();
 
   dataFiles.forEach((file) => {
+    if (!parseContentFilePath(file)) {
+      return;
+    }
+
     const route = getDataFileRoute(file);
     filePathToRoute.set(file, route);
     routeToFilePath.set(normalizeAppRoute(route), file);
@@ -174,6 +190,7 @@ function updateRouteMaps() {
 function buildOrganizedContent() {
   organizedContent = {
     adversaries: {},
+    structures: {},
     environments: {},
     traps: {},
     allies: {},
@@ -397,6 +414,12 @@ async function selectFile(file, link, options = {}) {
 
   if (file.includes("adversaries/")) {
     content.innerHTML = renderAdversaryCard(md);
+    syncFeatherIcons();
+    return;
+  }
+
+  if (file.includes("structures/")) {
+    content.innerHTML = await renderStructureCard(file, md);
     syncFeatherIcons();
     return;
   }
@@ -985,6 +1008,97 @@ function renderAllyCard(md) {
   `;
 }
 
+async function renderStructureCard(file, md) {
+  const segmentFiles = getStructureSegmentFiles(file);
+  const segments = await Promise.all(
+    segmentFiles.map(async (segmentFile) => {
+      const response = await fetch(`/api/file?path=${encodeURIComponent(segmentFile)}`);
+
+      if (!response.ok) {
+        throw new Error(`Unable to load structure segment ${segmentFile}`);
+      }
+
+      return response.text();
+    }),
+  );
+
+  return `
+    <div class="structure-stack">
+      ${renderStructureMainCard(md)}
+      ${segments.map((segment) => renderStructureSegmentCard(segment)).join("")}
+    </div>
+  `;
+}
+
+function renderStructureMainCard(md) {
+  const { meta, body } = parseFrontmatter(md);
+  const title = matchOrEmpty(body, /^# (.+)$/m);
+  const subtitle =
+    `Tier ${meta.tier || "?"} ${meta.type ? capitalizeWords(meta.type) : ""}`.trim();
+  const summary = extractSummary(body);
+  const motives = extractSection(body, /## Motives & Tactics/i);
+  const features = extractSection(body, /## Features/i);
+  const designNotes = extractSection(body, /## Design notes/i);
+  const processedFeatures = renderStandardFeatureMarkup(features);
+  const blockTable = `
+    <div class="block-table">
+      <div class="block-content">
+        ${meta.size ? `<strong>Size:</strong> ${parseInlineWithExternalTargets(meta.size)}<br>` : ""}
+        ${meta.segments ? `<strong>Segments:</strong> ${formatYamlList(meta.segments)}<br>` : ""}
+        ${meta.thresholds ? `<strong>Thresholds:</strong> ${formatThresholds(meta.thresholds)}` : ""}
+        ${meta.stress ? `&nbsp;|&nbsp;<strong>Stress:</strong> ${meta.stress}` : ""}
+      </div>
+      ${meta.experience ? `<hr><div class="block-content"><strong>Experience:</strong> ${formatInlineList(meta.experience)}</div>` : ""}
+    </div>
+  `;
+
+  return `
+    <div class="structure-card structure-main-card">
+      <h2>${title}</h2>
+      <div class="subtitle">${subtitle}</div>
+      <div class="summary">${parseInlineWithExternalTargets(summary)}</div>
+      <div>${motives ? `<strong>Motives & Tactics:</strong> ${parseInlineWithExternalTargets(motives)}` : ""}</div>
+      ${blockTable}
+      <h3>Features</h3>
+      <div class="feature-copy">${processedFeatures}</div>
+      ${renderDesignNotes(designNotes)}
+    </div>
+  `;
+}
+
+function renderStructureSegmentCard(md) {
+  const { meta, body } = parseFrontmatter(md);
+  const title = matchOrEmpty(body, /^# (.+)$/m);
+  const summary = extractSummary(body);
+  const features = extractSection(body, /## Features/i);
+  const processedFeatures = renderStandardFeatureMarkup(features);
+  const attackLine = meta.attack
+    ? `<br><strong>ATK:</strong> ${meta.attack}
+      &nbsp;|&nbsp;<strong>${meta.weapon || "Weapon"}:</strong> ${meta.range || ""} | ${meta.damage || ""} ${meta.damageType || ""}`
+    : "";
+  const adjacentSegments = meta.adjacentSegments ? formatYamlList(meta.adjacentSegments) : "";
+  const blockTable = `
+    <div class="block-table">
+      <div class="block-content">
+        ${meta.difficulty ? `<strong>Difficulty:</strong> ${meta.difficulty}` : ""}
+        ${meta.healthPoints ? `&nbsp;|&nbsp;<strong>HP:</strong> ${meta.healthPoints}` : ""}
+        ${attackLine}
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="structure-card structure-segment-card">
+      <h2>${title}</h2>
+      ${summary ? `<div class="summary">${parseInlineWithExternalTargets(summary)}</div>` : ""}
+      ${adjacentSegments ? `<div class="structure-adjacent"><strong>Adjacent Segments:</strong> ${parseInlineWithExternalTargets(adjacentSegments)}</div>` : ""}
+      ${blockTable}
+      <h3>Features</h3>
+      <div class="feature-copy">${processedFeatures}</div>
+    </div>
+  `;
+}
+
 function renderAncestryCard(md) {
   const { body } = parseFrontmatter(md);
   const title = matchOrEmpty(body, /^# (.+)$/m);
@@ -1304,6 +1418,60 @@ function formatInlineList(value) {
   return String(value || "")
     .replace(/^\[|\]$/g, "")
     .replace(/,/g, ", ");
+}
+
+function formatYamlList(value) {
+  if (!value) {
+    return "";
+  }
+
+  const rawValue = String(value).trim();
+
+  if (rawValue.startsWith("[") && rawValue.endsWith("]")) {
+    return formatInlineList(rawValue);
+  }
+
+  const lines = rawValue
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const entries = [];
+  let readingList = false;
+
+  for (const line of lines) {
+    if (line === "list:") {
+      readingList = true;
+      continue;
+    }
+
+    if (line.startsWith("- ") && (readingList || !line.startsWith("- group:"))) {
+      entries.push(line.replace(/^\-\s*/, "").trim());
+    }
+  }
+
+  return entries.length > 0 ? entries.join(", ") : rawValue;
+}
+
+function getStructureSegmentFiles(mainFile) {
+  const directory = String(mainFile).replace(/\/Main\.md$/i, "");
+
+  return dataFiles
+    .filter((file) => file.startsWith(`${directory}/`) && !/\/Main\.md$/i.test(file))
+    .sort((left, right) => {
+      const order = ["Head", "Torso", "Arm", "Leg"];
+      const leftName = stripMarkdownExtension(left.split("/").pop() || "");
+      const rightName = stripMarkdownExtension(right.split("/").pop() || "");
+      const leftIndex = order.indexOf(leftName);
+      const rightIndex = order.indexOf(rightName);
+
+      if (leftIndex !== -1 || rightIndex !== -1) {
+        return (leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex) -
+          (rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex);
+      }
+
+      return leftName.localeCompare(rightName);
+    });
 }
 
 function formatAllyMetaValue(value) {

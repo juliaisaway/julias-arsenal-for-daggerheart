@@ -291,6 +291,7 @@
 }
 
 .adversary-card,
+.structure-card,
 .ally-card,
 .ancestry-card,
 .community-card,
@@ -313,6 +314,61 @@
 
     hr {
       border-color: var(--adv-border-color);
+    }
+  }
+}
+
+.structure-stack {
+  width: 100%;
+  max-width: #{functions.rem(600)};
+  margin: var(--card-margin);
+  display: grid;
+  gap: var(--card-stack-gap);
+  grid-template-columns: 1fr;
+}
+
+.structure-card {
+  --card-link-color: color-mix(
+    in srgb,
+    var(--structure-border-color) 60%,
+    black
+  );
+  --card-border-cut-color: var(--structure-border-color);
+  --card-border-cut-bg: var(--structure-card-bg);
+  background: var(--structure-card-bg);
+  @extend %border-cut;
+  margin: 0;
+  max-width: none;
+
+  .block-table {
+    border-top: 1px solid var(--structure-border-color);
+    border-bottom: 1px solid var(--structure-border-color);
+
+    hr {
+      border-color: var(--structure-border-color);
+    }
+  }
+
+  .design-notes {
+    margin-top: #{functions.rem(16)};
+  }
+
+  .structure-adjacent {
+    margin: 0 0 8px;
+  }
+}
+
+.structure-main-card {
+  --card-border-cut-color: var(--structure-main-border-color);
+  --card-border-cut-bg: var(--structure-main-card-bg);
+  background: var(--structure-main-card-bg);
+
+  .block-table {
+    border-top-color: var(--structure-main-border-color);
+    border-bottom-color: var(--structure-main-border-color);
+
+    hr {
+      border-color: var(--structure-main-border-color);
     }
   }
 }

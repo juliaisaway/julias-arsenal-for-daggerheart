@@ -1,11 +1,12 @@
 # Contributing
 
-This repository stores custom Daggerheart adversaries, environments, and traps as Markdown source files with frontmatter. The build script compiles those source files into presentation-ready Markdown inside `dist/markdown/`.
+This repository stores custom Daggerheart adversaries, structures, environments, and traps as Markdown source files with frontmatter. The build script compiles those source files into presentation-ready Markdown inside `dist/markdown/`.
 
 ## Repository Structure
 
 - `data/`: source Markdown files
 - `data/adversaries/`: adversary source files grouped by tier
+- `data/structures/`: multi-statblock structure source folders grouped by tier
 - `data/environments/`: environment source files grouped by tier
 - `data/traps/`: trap source files grouped by tier
 - `templates/`: authoring templates
@@ -28,9 +29,10 @@ Removes generated files from `dist/`.
 
 ## Workflow
 
-1. Add or update source files under `data/adversaries/`, `data/environments/`, or `data/traps/`.
+1. Add or update source files under `data/adversaries/`, `data/structures/`, `data/environments/`, or `data/traps/`.
 2. Start from the appropriate template:
    - [templates/adversary.template.md](./templates/adversary.template.md)
+   - [templates/structure.template.md](./templates/structure.template.md)
    - [templates/environment.template.md](./templates/environment.template.md)
    - [templates/trap.template.md](./templates/trap.template.md)
 3. Run `npm run build`.
@@ -91,6 +93,46 @@ Use [templates/environment.template.md](./templates/environment.template.md) as 
 - Environment flavor should live inside `## Features` as a standalone italic paragraph beneath the relevant feature.
 - Standalone italic paragraphs inside environment features are rendered with the `.flavor` styling.
 - `## Design notes` is optional and, when present, is rendered below the card in a separate notes block.
+
+## Structure Rules
+
+Use [templates/structure.template.md](./templates/structure.template.md) as the source of truth for authoring structure.
+
+### File Layout for Structures
+
+- Structures live under `data/structures/tier N/Structure Name/`.
+- Every structure folder must include `Main.md`.
+- `Main.md` is the only navigable page in the site sidebar.
+- Additional Markdown files in the same folder are rendered as segment statblocks below `Main.md` on the same page.
+- The build compiles each structure folder into one generated file under `dist/markdown/structures/`.
+
+### Main Frontmatter Rules for Structures
+
+- `tier`: required, accepted values `1`, `2`, `3`, or `4`
+- `type`: required text field, such as `colossus`
+- `size`: optional text field
+- `segments`: optional list, usually written as `list`
+- `thresholds`: optional array of exactly two numbers with the first lower than the second
+- `stress`: optional non-negative number
+- `experience`: optional, plain text or array
+
+### Segment Frontmatter Rules for Structures
+
+- `adjacentSegments`: optional array
+- `difficulty`: required, non-negative number
+- `healthPoints`: required, non-negative number
+- Attack fields are optional, but if one is present, all attack fields must be present: `attack`, `weapon`, `range`, `damage`, and `damageType`.
+- `attack`: signed integer string such as `+1` or `-2`
+- `range`: accepted values `Melee`, `Very Close`, `Close`, `Far`, `Very Far`
+- `damageType`: accepted values `physical` or `magic`
+
+### Body Rules for Structures
+
+- Every file must include a single H1 title.
+- `Main.md` may include `## Motives & Tactics`.
+- All structure files should use `## Features` with `### Feature Name - Type` headings.
+- Feature text may include multiple paragraphs.
+- `## Design notes` is optional on `Main.md` and, when present, is rendered below the main structure card.
 
 ## Trap Rules
 
