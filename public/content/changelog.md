@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-05-13
+
+- Added a new section: [Structures](/mechanics/structures/ "Structures"). They represent large-scale entities made of multiple interconnected parts.
+  - Added a new Structure: [Longboat](/structures/tier-2/longboat/ "Longboat").
+- Added a couple of new adversaries:
+  - [Minor Water Elemental](/adversaries/tier-1/minor-water-elemental/ "Minor Water Elemental")
+  - [Crimson Rite Conduit](/adversaries/tier-2/crimson-rite-conduit/ "Crimson Rite Conduit")
+  - [Crimson Rite Keeper](/adversaries/tier-2/crimson-rite-keeper/ "Crimson Rite Keeper")
+  - [Crimson Rite Martyr](/adversaries/tier-2/crimson-rite-martyr/ "Crimson Rite Martyr")
+- New colors and layout
+- New sidebar organization for better organization.
+
 ## 2026-04-15
 
 - Added a new Ancestry: [Noctari](/ancestries/noctari/ "Noctari").

@@ -227,6 +227,18 @@ body {
       font-size: #{functions.rem(14)};
     }
 
+    &.pages::before {
+      background: var(--category-pages-marker-color);
+    }
+    &.new-mechanics::before {
+      background: var(--category-new-mechanics-marker-color);
+    }
+    &.character-options::before {
+      background: var(--category-character-options-marker-color);
+    }
+    &.gm-options::before {
+      background: var(--category-gm-options-marker-color);
+    }
     &.mechanics::before {
       background: var(--mechanic-border-color);
     }
@@ -310,6 +322,12 @@ body {
         &:focus-visible {
           color: var(--sidebar-hover-color);
           font-weight: 500;
+        }
+
+        &.selected:hover,
+        &.selected:focus-visible {
+          color: var(--file-li-selected-color);
+          background: var(--file-li-selected-hover-bg);
         }
 
         &:focus-visible {

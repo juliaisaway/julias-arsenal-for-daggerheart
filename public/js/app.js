@@ -22,8 +22,25 @@ const CATEGORY_CONFIG = {
   ancestries: { groupedByTier: false },
   communities: { groupedByTier: false },
 };
-const CATEGORY_ORDER = ["adversaries", "structures", "allies", "ancestries", "communities", "environments", "traps"];
+const CATEGORY_ORDER = [
+  "adversaries",
+  "structures",
+  "allies",
+  "ancestries",
+  "communities",
+  "environments",
+  "traps",
+];
 const MECHANIC_DATA_PAGE_SLUGS = new Set(["conditions"]);
+const MECHANIC_NAV_ORDER = ["allies", "structures", "conditions"];
+const PLAYER_OPTION_CATEGORIES = ["ancestries", "communities"];
+const GM_OPTION_CATEGORIES = [
+  "adversaries",
+  "allies",
+  "environments",
+  "structures",
+  "traps",
+];
 const STATIC_PAGE_HOME = "/";
 const STATIC_PAGE_CHANGELOG = "/changelog/";
 const STATIC_PAGE_FILES = {
@@ -120,7 +137,12 @@ function parseContentFilePath(filePath) {
         return null;
       }
 
-      return { category, group, fileName: structureName, sourceFileName: fileName };
+      return {
+        category,
+        group,
+        fileName: structureName,
+        sourceFileName: fileName,
+      };
     }
 
     const [group, fileName] = rest;
@@ -467,10 +489,11 @@ function appendStaticNavigation(sidebar, mechanics) {
   if (mechanics.length > 0) {
     appendNavigationSection(
       sidebar,
-      "Rules & Mechanics",
-      mechanics.map((page) => ({
+      "New Mechanics",
+      getSortedMechanicPages().map((page) => ({
         label: page.title,
-        route: getMechanicRoute(page.slug),
+        route: page.route,
+        mechanic: page,
       })),
     );
   }
@@ -494,22 +517,63 @@ function renderPrimarySidebar() {
 }
 
 function appendContentOverviewSections(sidebar) {
-  CATEGORY_ORDER.forEach((category) => {
+  appendCategoryNavigationSection(
+    sidebar,
+    "Character Options",
+    "character-options",
+    PLAYER_OPTION_CATEGORIES,
+  );
+  appendCategoryNavigationSection(
+    sidebar,
+    "GM Options",
+    "gm-options",
+    GM_OPTION_CATEGORIES,
+  );
+}
+
+function getSortedMechanicPages() {
+  return mechanicPages.slice().sort((left, right) => {
+    const leftIndex = MECHANIC_NAV_ORDER.indexOf(left.slug);
+    const rightIndex = MECHANIC_NAV_ORDER.indexOf(right.slug);
+
+    if (leftIndex !== -1 || rightIndex !== -1) {
+      return (
+        (leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex) -
+        (rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex)
+      );
+    }
+
+    return left.title.localeCompare(right.title);
+  });
+}
+
+function appendCategoryNavigationSection(
+  sidebar,
+  title,
+  className,
+  categories,
+) {
+  const availableCategories = categories.filter((category) =>
+    hasDetailSidebarContent(category),
+  );
+
+  if (availableCategories.length === 0) {
+    return;
+  }
+
+  const section = createSidebarSection(title, className);
+  const categoryHeader = document.createElement("h2");
+  categoryHeader.className = `category-header ${className}`;
+  categoryHeader.textContent = title;
+  section.appendChild(categoryHeader);
+
+  const list = document.createElement("ul");
+  list.className = "file-sublist static-pages";
+
+  availableCategories.forEach((category) => {
     if (!hasDetailSidebarContent(category)) {
       return;
     }
-
-    const section = createSidebarSection(
-      formatCategoryLabel(category),
-      category,
-    );
-    const categoryHeader = document.createElement("h2");
-    categoryHeader.className = `category-header ${category}`;
-    categoryHeader.textContent = formatCategoryLabel(category);
-    section.appendChild(categoryHeader);
-
-    const list = document.createElement("ul");
-    list.className = "file-sublist static-pages";
 
     const item = document.createElement("li");
     const link = document.createElement("a");
@@ -517,7 +581,7 @@ function appendContentOverviewSections(sidebar) {
     const route = getCategoryLandingRoute(category);
 
     link.href = route;
-    link.textContent = "View all";
+    link.textContent = formatCategoryLabel(category);
     link.dataset.categoryLink = category;
     link.dataset.route = route;
     link.addEventListener("click", (event) => {
@@ -542,9 +606,10 @@ function appendContentOverviewSections(sidebar) {
 
     item.appendChild(link);
     list.appendChild(item);
-    section.appendChild(list);
-    sidebar.appendChild(section);
   });
+
+  section.appendChild(list);
+  sidebar.appendChild(section);
 }
 
 function renderDetailSidebar(category, activeFilePath) {
@@ -626,9 +691,10 @@ function renderDetailSidebar(category, activeFilePath) {
 }
 
 function appendNavigationSection(sidebar, title, pages) {
-  const section = createSidebarSection(title, title.toLowerCase());
+  const sectionClass = slugifySegment(title);
+  const section = createSidebarSection(title, sectionClass);
   const categoryHeader = document.createElement("h2");
-  categoryHeader.className = `category-header ${title.toLowerCase()}`;
+  categoryHeader.className = `category-header ${sectionClass}`;
   categoryHeader.textContent = title;
   section.appendChild(categoryHeader);
 
@@ -644,6 +710,11 @@ function appendNavigationSection(sidebar, title, pages) {
     link.dataset.route = page.route;
     link.addEventListener("click", (event) => {
       event.preventDefault();
+      if (page.mechanic) {
+        selectMechanicPage(page.mechanic, link, { history: "push" });
+        return;
+      }
+
       selectStaticPage(page.route, link, { history: "push" });
     });
     li.appendChild(link);
@@ -674,9 +745,12 @@ function selectStaticPage(page, link, options = {}) {
   renderDetailSidebar(null);
   setActiveMobileSidebarPanel("primary");
 
-  if (page !== STATIC_PAGE_HOME && link) {
-    link.classList.add("selected");
-    link.setAttribute("aria-current", "page");
+  const activeLink =
+    link || document.querySelector(`#sidebar a[data-route="${page}"]`);
+
+  if (activeLink) {
+    activeLink.classList.add("selected");
+    activeLink.setAttribute("aria-current", "page");
   }
 
   if (history === "push") {
@@ -687,6 +761,31 @@ function selectStaticPage(page, link, options = {}) {
 
   closeMobileMenuIfNeeded();
   renderStaticPage(page);
+}
+
+function selectMechanicPage(page, link, options = {}) {
+  const { history = "replace" } = options;
+  const route = typeof page === "string" ? page : page.route;
+  clearSidebarSelection();
+  renderDetailSidebar(null);
+  setActiveMobileSidebarPanel("primary");
+
+  const activeLink =
+    link || document.querySelector(`#sidebar a[data-route="${route}"]`);
+
+  if (activeLink) {
+    activeLink.classList.add("selected");
+    activeLink.setAttribute("aria-current", "page");
+  }
+
+  if (history === "push") {
+    pushBrowserRoute(route);
+  } else if (history === "replace") {
+    replaceBrowserRoute(route);
+  }
+
+  closeMobileMenuIfNeeded();
+  renderStaticPage(route);
 }
 
 async function loadInitialRoute() {
@@ -702,6 +801,11 @@ async function loadInitialRoute() {
   }
 
   if (resolvedRoute.kind === "static") {
+    if (isMechanicRoute(resolvedRoute.route)) {
+      selectMechanicPage(resolvedRoute.route, null, { history: "none" });
+      return;
+    }
+
     const pageLink = document.querySelector(
       `#sidebar a[data-route="${resolvedRoute.route}"]`,
     );
@@ -1012,7 +1116,9 @@ async function renderStructureCard(file, md) {
   const segmentFiles = getStructureSegmentFiles(file);
   const segments = await Promise.all(
     segmentFiles.map(async (segmentFile) => {
-      const response = await fetch(`/api/file?path=${encodeURIComponent(segmentFile)}`);
+      const response = await fetch(
+        `/api/file?path=${encodeURIComponent(segmentFile)}`,
+      );
 
       if (!response.ok) {
         throw new Error(`Unable to load structure segment ${segmentFile}`);
@@ -1076,7 +1182,9 @@ function renderStructureSegmentCard(md) {
     ? `<br><strong>ATK:</strong> ${meta.attack}
       &nbsp;|&nbsp;<strong>${meta.weapon || "Weapon"}:</strong> ${meta.range || ""} | ${meta.damage || ""} ${meta.damageType || ""}`
     : "";
-  const adjacentSegments = meta.adjacentSegments ? formatYamlList(meta.adjacentSegments) : "";
+  const adjacentSegments = meta.adjacentSegments
+    ? formatYamlList(meta.adjacentSegments)
+    : "";
   const blockTable = `
     <div class="block-table">
       <div class="block-content">
@@ -1445,7 +1553,10 @@ function formatYamlList(value) {
       continue;
     }
 
-    if (line.startsWith("- ") && (readingList || !line.startsWith("- group:"))) {
+    if (
+      line.startsWith("- ") &&
+      (readingList || !line.startsWith("- group:"))
+    ) {
       entries.push(line.replace(/^\-\s*/, "").trim());
     }
   }
@@ -1457,7 +1568,9 @@ function getStructureSegmentFiles(mainFile) {
   const directory = String(mainFile).replace(/\/Main\.md$/i, "");
 
   return dataFiles
-    .filter((file) => file.startsWith(`${directory}/`) && !/\/Main\.md$/i.test(file))
+    .filter(
+      (file) => file.startsWith(`${directory}/`) && !/\/Main\.md$/i.test(file),
+    )
     .sort((left, right) => {
       const order = ["Head", "Torso", "Arm", "Leg"];
       const leftName = stripMarkdownExtension(left.split("/").pop() || "");
@@ -1466,8 +1579,10 @@ function getStructureSegmentFiles(mainFile) {
       const rightIndex = order.indexOf(rightName);
 
       if (leftIndex !== -1 || rightIndex !== -1) {
-        return (leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex) -
-          (rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex);
+        return (
+          (leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex) -
+          (rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex)
+        );
       }
 
       return leftName.localeCompare(rightName);
@@ -1770,6 +1885,14 @@ function handleDocumentNavigation(event) {
       `#detail-sidebar a[data-route="${resolvedRoute.route}"]`,
     );
     selectFile(resolvedRoute.file, fileLink, { history: "push" });
+    return;
+  }
+
+  if (isMechanicRoute(resolvedRoute.route)) {
+    const pageLink = document.querySelector(
+      `#sidebar a[data-route="${resolvedRoute.route}"]`,
+    );
+    selectMechanicPage(resolvedRoute.route, pageLink, { history: "push" });
     return;
   }
 

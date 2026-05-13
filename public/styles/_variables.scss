@@ -7,11 +7,11 @@
     rgba(255, 255, 255, 1) 0%,
     rgba(229, 226, 221, 1) 100%
   );
-  --primary-color: #763c88;
+  --primary-color: #9088d0;
   --highlight-color: #e3b74c;
   --bg-fallback: #ffffff;
-  --sidebar-bg: #1a1a1a;
-  --detail-sidebar-bg: #222222;
+  --sidebar-bg: #1a1b21;
+  --detail-sidebar-bg: #24252e;
   --sidebar-color: #ccc;
   --sidebar-hover-color: #fff;
   --adv-card-bg: #f4f0e7;
@@ -28,6 +28,14 @@
   --mechanic-border-color: #d89e77;
   --mechanic-heading-color: #b7561c;
   --mechanic-subheading-color: #977c31;
+  --mechanic-table-header-bg: var(--mechanic-heading-color);
+  --mechanic-table-header-color: var(--sidebar-hover-color);
+  --mechanic-table-row-bg: transparent;
+  --mechanic-table-row-alt-bg: color-mix(
+    in srgb,
+    var(--mechanic-heading-color) 12%,
+    var(--mechanic-card-bg)
+  );
   --welcome-card-bg: #f2e5f6;
   --welcome-border-color: #b28abe;
   --ally-card-bg: #eef1f6;
@@ -52,8 +60,17 @@
   --text-dark: #191919;
   --text-light: #3a3a3a;
   --file-li-selected-bg: var(--primary-color);
-  --file-li-selected-color: #fff;
+  --file-li-selected-hover-bg: color-mix(
+    in srgb,
+    var(--file-li-selected-bg) 80%,
+    white
+  );
+  --file-li-selected-color: var(--sidebar-bg);
   --category-header-color: #aaa;
+  --category-pages-marker-color: var(--primary-color);
+  --category-new-mechanics-marker-color: #b7561c;
+  --category-character-options-marker-color: #536537;
+  --category-gm-options-marker-color: #763c88;
   --tier-header-color: #666;
 
   /* Mobile-specific colors */
