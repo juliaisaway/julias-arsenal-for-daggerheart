@@ -41,4 +41,4 @@ Spend a Fear to roar, causing a spectral energy to propagate. All targets within
 
 ## Design notes
 
-This is my take on the *Stonewraith* from the [*Daggerheart System Reference Document*](https://www.daggerheart.com/srd/ "Daggerheart System Reference Document"), but changed to be a Spectral unit, alongside *Spectral Guardian*, *Spectral Captain* and *Spectral Archer*.
+This is my take on the _Stonewraith_ from the [_Daggerheart System Reference Document_](https://www.daggerheart.com/srd/ "Daggerheart System Reference Document"), but changed to be a Spectral unit, alongside _Spectral Guardian_, _Spectral Captain_ and _Spectral Archer_.

@@ -26,3 +26,7 @@ Stay on course, protect its cargo, endure the sea, carry the crew to safety
 ### Open Waters - Passive
 
 Sailing through dangerous waters requires the party to complete a Progress Countdown (16). A PC who rolls with Fear while navigating, repairing, or commanding the Longboat marks a Stress. When it triggers, the Longboat reaches safe waters.
+
+### Structural Collapse - Passive
+
+When two sectors of the Longboat are Destroyed, the Longboat is destroyed.

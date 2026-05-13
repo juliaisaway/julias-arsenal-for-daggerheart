@@ -20,4 +20,4 @@ A ghostly hunting hound bound to an ancient battlefield, phasing in and out of r
 
 **Ghostly Roar - Action:** Spend a Fear to roar, causing a spectral energy to propagate. All targets within Close range must succeed on an Presence Reaction Roll (14) or take 2d8 magic damage and become Vulnerable temporarily.
 
-> **Design notes:** This is my take on the *Stonewraith* from the [*Daggerheart System Reference Document*](https://www.daggerheart.com/srd/ "Daggerheart System Reference Document"), but changed to be a Spectral unit, alongside *Spectral Guardian*, *Spectral Captain* and *Spectral Archer*.
+> **Design notes:** This is my take on the _Stonewraith_ from the [_Daggerheart System Reference Document_](https://www.daggerheart.com/srd/ "Daggerheart System Reference Document"), but changed to be a Spectral unit, alongside _Spectral Guardian_, _Spectral Captain_ and _Spectral Archer_.

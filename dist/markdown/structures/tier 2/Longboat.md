@@ -15,6 +15,8 @@ A long, narrow vessel built to carry crew and cargo across dangerous waters.
 
 **Open Waters - Passive:** Sailing through dangerous waters requires the party to complete a Progress Countdown (16). A PC who rolls with Fear while navigating, repairing, or commanding the Longboat marks a Stress. When it triggers, the Longboat reaches safe waters.
 
+**Structural Collapse - Passive:** When two sectors of the Longboat are Destroyed, the Longboat is destroyed.
+
 ---
 
 ## Longboat Bow
@@ -37,7 +39,7 @@ A long, narrow vessel built to carry crew and cargo across dangerous waters.
 
 ### Features
 
-**Fatal Breach - Passive:** When the Deck is Destroyed, the Longboat is destroyed.
+**Collapsing Deck - Passive:** When the Deck is Destroyed, broken cargo and debris litter the deck. Whenever a PC ends their Spotlight within the Deck, they must mark a Stress.
 
 **Secure Cargo - Action:** A PC within the Deck can secure loose cargo before it crashes across the ship. They make a Strength Roll. On a success, advance the Longboat’s countdown. On a critical success, advance the countdown twice.
 
@@ -63,7 +65,9 @@ A long, narrow vessel built to carry crew and cargo across dangerous waters.
 
 ### Features
 
-**Fatal Breach - Passive:** When the Stern is Destroyed, the Longboat is destroyed.
+**Broken Stern - Passive:** When the Stern is Destroyed, spawn another Minor Water Elemental within the Stern.
+
+The storm begins overwhelming the Longboat. Minor Water Elementals within the Stern no longer focus on destroying the ship and instead attack the PCs directly.
 
 **Steady the Rudder - Action:** If there are no adversaries within the Stern, a PC within the Stern can carefully guide the Longboat through the storm. They make a Finesse Roll. On a success, advance the Longboat’s countdown. On a critical success, advance the countdown twice.
 

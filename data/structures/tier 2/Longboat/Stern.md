@@ -8,9 +8,11 @@ healthPoints: 8
 
 ## Features
 
-### Fatal Breach - Passive
+### Broken Stern - Passive
 
-When the Stern is Destroyed, the Longboat is destroyed.
+When the Stern is Destroyed, spawn another Minor Water Elemental within the Stern.
+
+The storm begins overwhelming the Longboat. Minor Water Elementals within the Stern no longer focus on destroying the ship and instead attack the PCs directly.
 
 ### Steady the Rudder - Action
 

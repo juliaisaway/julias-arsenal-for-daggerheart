@@ -8,9 +8,9 @@ healthPoints: 10
 
 ## Features
 
-### Fatal Breach - Passive
+### Collapsing Deck - Passive
 
-When the Deck is Destroyed, the Longboat is destroyed.
+When the Deck is Destroyed, broken cargo and debris litter the deck. Whenever a PC ends their Spotlight within the Deck, they must mark a Stress.
 
 ### Secure Cargo - Action
 
