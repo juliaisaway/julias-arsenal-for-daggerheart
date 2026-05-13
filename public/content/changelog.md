@@ -9,8 +9,8 @@
   - [Crimson Rite Conduit](/adversaries/tier-2/crimson-rite-conduit/ "Crimson Rite Conduit")
   - [Crimson Rite Keeper](/adversaries/tier-2/crimson-rite-keeper/ "Crimson Rite Keeper")
   - [Crimson Rite Martyr](/adversaries/tier-2/crimson-rite-martyr/ "Crimson Rite Martyr")
-- New colors and layout
-- New sidebar organization for better organization.
+- Refreshed the website colors and overall layout.
+- Reorganized the sidebar to improve navigation and content discovery.
 
 ## 2026-04-15
 

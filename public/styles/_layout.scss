@@ -398,8 +398,6 @@ body.has-detail-sidebar {
 }
 
 #md-content {
-  padding: var(--md-content-padding);
-
   @media (max-width: #{functions.rem(896)}) {
     width: 100%;
   }
